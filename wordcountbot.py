@@ -13,6 +13,18 @@ from steembase.exceptions import (
     PostDoesNotExist
 )
 post_urls = []
+# Account to track for blacklisted/muted users
+trackaccount = 'travelfeed'
+# Tag to search in
+tracktag = 'travelfeed'
+# Account (previously added in steempy) to post the comments
+postaccount = 'travelfeed-bot'
+# Max. number of blacklisted (=muted) accounts to check
+abusersmax = 20
+# Comment for short posts 
+shortposttext = "Hi @{}, \n Thank you for participating in the #travelfeed curated tag. To maintain a level of quality on the project we have certain criteria that must be met for participation. Please review the following: https://steemit.com/travelfeed/@travelfeed/how-to-participate-use-travelfeed-in-your-posts \n **We require at least 250 words, but your post has only {} words.** \n Thank you very much for your interest and we hope to read some great travel articles from you soon! \n Regards, TravelFeed"
+# Comment for blacklisted users
+blacklisttext = "Hi @{}, \n Thank you for participating in the #travelfeed curated tag. To maintain a level of quality on the project we have certain criteria that must be met for participation. Please review the following: https://steemit.com/travelfeed/@travelfeed/how-to-participate-use-travelfeed-in-your-posts \n Regards, TravelFeed"
 def converter(object_):
     if isinstance(object_, datetime.datetime):
         return object_.__str__()
@@ -22,20 +34,33 @@ def stream_blockchain():
         steem = Steem(wif=steemPostingKey)
         blockchain = Blockchain()
         stream = map(Post, blockchain.stream(filter_by=['comment']))
+        abusers = steem.get_following(trackaccount, '', 'ignore', abusersmax)
         print(time.strftime('%X')+" Info: Stream from blockchain started")
     except Exception as error:
         print(time.strftime('%X')+" Error: Could not start blockchain stream "+repr(error))
     while True:
         try:
             for post in stream:
-                if post.is_main_post() and "travelfeed" in post["tags"]:
+                if post.is_main_post() and tracktag in post["tags"]:
                     permlink = post['permlink']
+                    author = post["author"]
                     if permlink in post_urls:
                         print(time.strftime('%X')+" Info: Ignoring updated post")
+                    elif any(d['following'] == author for d in abusers): 
+                        try: 
+                            post.reply(blacklisttext.format(author), "", postaccount)
+                            print(time.strftime('%X')+" Success: I detected a blacklisted user and sucessfully left a comment for @{}".format(author))              
+                        except:
+                            print(time.strftime('%X')+" Info: I detected a blacklisted user but there was an error posting the comment, could be due to the 20 second limit on comments. I will try my best to not let him get away!")
+                            time.sleep(19)
+                            try:
+                                post.reply(blacklisttext.format(author), "", postaccount)
+                                print(time.strftime('%X')+" Success: Cool, now it worked, I successfully left a comment for the blaklisted user @{}!".format(author))
+                            except:
+                                print(time.strftime('%X')+" Warning: Nope, still an error, this blacklisted user (@{}) got away due to the error".format(author)+repr(error))
                     else:
                         try:
                             post_urls.append(permlink)
-                            author = post["author"]
                             html = markdown(post["body"])
                             soup = BeautifulSoup(html, "html.parser")
                             text = ''.join(soup.findAll(text=True))
@@ -44,18 +69,18 @@ def stream_blockchain():
                             if count > 249:
                                 print(time.strftime('%X')+" Success: There is a new awesome post by @{} who posted with {} words".format(author, count))
                             else:
-                                commenttext = "Hi @{}, \n Thank you for participating in the #travelfeed curated tag. To maintain a level of quality on the project we have certain criteria that must be met for participation. Please review the following: https://steemit.com/travelfeed/@travelfeed/how-to-participate-use-travelfeed-in-your-posts \n **We require at least 250 words, but your post has only {} words.** \n Thank you very much for your interest and we hope to read some great travel articles from you soon! \n Regards, TravelFeed"
                                 try:
-                                    post.reply(commenttext.format(author, count), "", "travelfeed-bot")
+                                    post.reply(shortposttext.format(author, count), "", postaccount)
                                     print(time.strftime('%X')+" Success: I detected a rule breaker and sucessfully left a comment for @{} since we require at least 250 words but I have only counted {} words in the post".format(author, count))              
                                 except:
                                     print(time.strftime('%X')+" Info: I detected a rule breaker but there was an error posting the comment, could be due to the 20 second limit on comments. I will try my best to not let him get away!")
                                     time.sleep(19)
                                     try:
-                                        post.reply(commenttext.format(author, count), "", "travelfeed-bot")
-                                        print(time.strftime('%X')+" Success: Cool, now it worked, I successfully left a comment for @{}!".format(author)+repr(error))
+                                        post.reply(shortposttext.format(author, count), "", postaccount)
+                                        print(time.strftime('%X')+" Success: Cool, now it worked, I successfully left a comment for @{}!".format(author))
                                     except:
-                                        print(time.strftime('%X')+" Warning: Nope, still an error, this rulebreaker (@{}) got away due to the error".format(author)+repr(error))
+                                        print(time.strftime('%X')+" Warning: Nope, still an error, the rulebreaker (@{}) got away due to this error: ".format(author)+repr(error))
+                                        continue
                         except Exception as error:
                             print(time.strftime('%X')+" Warning: Error while processing post "+repr(error))
                             continue

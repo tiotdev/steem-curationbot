@@ -44,7 +44,7 @@ def stream_blockchain():
                             if count > 249:
                                 print(time.strftime('%X')+" Success: There is a new awesome post by @{} who posted with {} words".format(author, count))
                             else:
-                                commenttext = "Hi @{}, \n Thank you for participating in the #travelfeed curated tag. To maintain a level of quality on the project we have certain criteria that must be met for participation. Please review the following: https://steemit.com/travelfeed/@travelfeed/how-to-participate-use-travelfeed-in-your-posts \n Thank you very much for your interest and we hope to read some great travel articles from you soon! \n Regards, TravelFeed"
+                                commenttext = "Hi @{}, \n Thank you for participating in the #travelfeed curated tag. To maintain a level of quality on the project we have certain criteria that must be met for participation. Please review the following: https://steemit.com/travelfeed/@travelfeed/how-to-participate-use-travelfeed-in-your-posts \n **We require at least 250 words, but your post has only {} words.** \n Thank you very much for your interest and we hope to read some great travel articles from you soon! \n Regards, TravelFeed"
                                 try:
                                     post.reply(commenttext.format(author, count), "", "travelfeed-bot")
                                     print(time.strftime('%X')+" Success: I detected a rule breaker and sucessfully left a comment for @{} since we require at least 250 words but I have only counted {} words in the post".format(author, count))              

@@ -7,12 +7,10 @@ import json
 import datetime
 import re
 import time
+import random
 from bs4 import BeautifulSoup
 from markdown import markdown
-from steembase.exceptions import PostDoesNotExist, RPCError
-nodenr = 0
-nodes = []
-tags = []
+from steembase.exceptions import PostDoesNotExist
 post_urls = []
 # Account to track for blacklisted/muted users
 trackaccount = 'travelfeed'
@@ -32,8 +30,10 @@ def converter(object_):
     if isinstance(object_, datetime.datetime):
         return object_.__str__()
 
-def stream_blockchain():
+
+def stream_blockchain(starting_point):
     try:
+        nodenr = random.randint(1, 4)
         if nodenr%4 == 0: 
             nodes = ['https://rpc.buildteam.io', 'wss://steemd.steemgigs.org']
         elif nodenr%4 == 1:
@@ -44,13 +44,18 @@ def stream_blockchain():
             nodes = ['wss://steemd.pevo.science', 'https://api.steemit.com']
         steem = Steem(wif=steemPostingKey,node=nodes)
         blockchain = Blockchain()
-        stream = map(Post, blockchain.stream(filter_by=['comment']))
+        if not starting_point:
+            try:
+                props = steem.get_dynamic_global_properties()
+                starting_point = props['last_irreversible_block_num']
+            except:
+                stream_blockchain(None)
+        stream = map(Post, blockchain.stream(filter_by=['comment'], start_block=starting_point))
         abusers = steem.get_following(trackaccount, '', 'ignore', abusersmax)
-        print(time.strftime('%X')+" Info: Stream from blockchain started with nodes "+str(nodes).strip('[]'))
+        print(time.strftime('%X')+" Info: Stream from blockchain started with nodes "+str(nodes).strip('[]')+" starting at block "+str(starting_point))
     except Exception as error:
         print(time.strftime('%X')+" Warning: Could not start blockchain stream. Switching nodes. "+repr(error))
-        ++nodenr
-        stream_blockchain()
+        stream_blockchain(None)
     while True:
         try:
             for post in stream:
@@ -103,19 +108,17 @@ def stream_blockchain():
                         except Exception as error:
                             print(time.strftime('%X')+" Warning: Error while processing post "+repr(error))
                             continue
-        except RPCError:
-            print(time.strftime('%X')+" Warning: RPCError. Switching nodes.")
-            ++nodenr
-            stream_blockchain()
-        except TypeError:
-            print(time.strftime('%X')+" Warning: TypeError. Switching nodes.")
-            ++nodenr
-            stream_blockchain()
         except PostDoesNotExist:
             print(time.strftime('%X')+" Info: Skipping invalid post")
             continue
         except Exception as error:
             print(time.strftime('%X')+" Warning: "+repr(error))
-            continue
+            try:
+                props = steem.get_dynamic_global_properties()
+                starting_point = props['last_irreversible_block_num']
+            except:
+                starting_point = None
+            stream_blockchain(starting_point)
 if __name__ == '__main__':
-    stream_blockchain()
+    starting_point=None
+    stream_blockchain(starting_point)

@@ -10,8 +10,9 @@ import time
 from bs4 import BeautifulSoup
 from markdown import markdown
 from steembase.exceptions import PostDoesNotExist, RPCError
-nodenr = 1
+nodenr = 0
 nodes = []
+tags = []
 post_urls = []
 # Account to track for blacklisted/muted users
 trackaccount = 'travelfeed'
@@ -34,26 +35,30 @@ def converter(object_):
 def stream_blockchain():
     try:
         if nodenr%4 == 0: 
-            nodes = ['https://steemd.privex.io', 'https://api.steemit.com']
+            nodes = ['https://rpc.buildteam.io', 'wss://steemd.steemgigs.org']
         elif nodenr%4 == 1:
-            nodes = ['https://rpc.steemliberator.com', 'https://gtg.steem.house:8090']
+            nodes = ['https://rpc.steemliberator.com', 'wss://gtg.steem.house:8090']
         elif nodenr%4 == 2:
-            nodes = ['https://steemd.pevo.science', 'https://rpc.steemviz.com']
+            nodes = ['wss://steemd.privex.io', 'https://rpc.steemviz.com']
         else:
-            nodes = ['https://rpc.buildteam.io', 'https://steemd.minnowsupportproject.org']
+            nodes = ['wss://steemd.pevo.science', 'https://api.steemit.com']
         steem = Steem(wif=steemPostingKey,node=nodes)
         blockchain = Blockchain()
         stream = map(Post, blockchain.stream(filter_by=['comment']))
         abusers = steem.get_following(trackaccount, '', 'ignore', abusersmax)
-        print(time.strftime('%X')+" Info: Stream from blockchain started")
+        print(time.strftime('%X')+" Info: Stream from blockchain started with nodes "+str(nodes).strip('[]'))
     except Exception as error:
-        print(time.strftime('%X')+" Info: Could not start blockchain stream. Switching nodes. "+repr(error))
+        print(time.strftime('%X')+" Warning: Could not start blockchain stream. Switching nodes. "+repr(error))
         ++nodenr
         stream_blockchain()
     while True:
         try:
             for post in stream:
-                if post.is_main_post() and tracktag in post["tags"]:
+                try:
+                    tags = post["tags"]
+                except:
+                    tags = []
+                if post.is_main_post() and tracktag in tags:
                     permlink = post['permlink']
                     author = post["author"]
                     if permlink in post_urls:
@@ -99,14 +104,18 @@ def stream_blockchain():
                             print(time.strftime('%X')+" Warning: Error while processing post "+repr(error))
                             continue
         except RPCError:
-            print(time.strftime('%X')+" Info: Blockchain Error. Switching node.")
+            print(time.strftime('%X')+" Warning: RPCError. Switching nodes.")
+            ++nodenr
+            stream_blockchain()
+        except TypeError:
+            print(time.strftime('%X')+" Warning: TypeError. Switching nodes.")
             ++nodenr
             stream_blockchain()
         except PostDoesNotExist:
             print(time.strftime('%X')+" Info: Skipping invalid post")
             continue
         except Exception as error:
-            print(time.strftime('%X')+" Warning: Blockchain error "+repr(error))
+            print(time.strftime('%X')+" Warning: "+repr(error))
             continue
 if __name__ == '__main__':
     stream_blockchain()

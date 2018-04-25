@@ -11,7 +11,7 @@ import random
 from bs4 import BeautifulSoup
 from markdown import markdown
 from steembase.exceptions import PostDoesNotExist
-post_urls = []
+import atexit
 # Account to track for blacklisted/muted users
 trackaccount = 'travelfeed'
 # Tag to search in
@@ -26,10 +26,17 @@ abusersmax = 20
 shortposttext = "Hi @{}, \n Thank you for participating in the #travelfeed curated tag. To maintain a level of quality on the project we have certain criteria that must be met for participation. Please review the following: https://steemit.com/travelfeed/@travelfeed/how-to-participate-use-travelfeed-in-your-posts \n **We require at least 250 words, but your post has only {} words.** \n Thank you very much for your interest and we hope to read some great travel articles from you soon! \n Regards, TravelFeed"
 # Comment for blacklisted users
 blacklisttext = "Hi @{}, \n Thank you for participating in the #travelfeed curated tag. To maintain a level of quality on the project we have certain criteria that must be met for participation. Please review the following: https://steemit.com/travelfeed/@travelfeed/how-to-participate-use-travelfeed-in-your-posts \n Regards, TravelFeed"
+# Define path for logging
+logpath = 'short_posts.log'
+try: 
+    with open(logpath) as f:
+        post_urls = f.read().splitlines()
+    file.close()
+except:
+    post_urls = []
 def converter(object_):
     if isinstance(object_, datetime.datetime):
         return object_.__str__()
-
 
 def stream_blockchain(starting_point):
     try:
@@ -119,6 +126,15 @@ def stream_blockchain(starting_point):
             except:
                 starting_point = None
             stream_blockchain(starting_point)
+
+def exit_handler():
+    file = open(logpath, 'a+')
+    for item in post_urls:
+        file.write("%s\n" % item)
+    file.close()
+
 if __name__ == '__main__':
     starting_point=None
     stream_blockchain(starting_point)
+
+atexit.register(exit_handler)

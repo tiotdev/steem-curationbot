@@ -9,10 +9,9 @@ import re
 import time
 from bs4 import BeautifulSoup
 from markdown import markdown
-from steembase.exceptions import (
-    PostDoesNotExist
-)
-nodes = ['wss://steemd.privex.io', 'wss://steemd.pevo.science', 'wss://rpc.buildteam.io', 'wss://rpc.steemliberator.com', 'wss://gtg.steem.house:8090', 'wss://rpc.steemviz.com', 'wss://seed.bitcoiner.me', 'wss://steemd.steemgigs.org', 'wss://steemd.minnowsupportproject.org', 'https://rpc.buildteam.io', 'https://steemd.minnowsupportproject.org', 'https://steemd.pevo.science', 'https://rpc.steemviz.com', 'https://seed.bitcoiner.me', 'https://rpc.steemliberator.com', 'https://steemd.privex.io', 'https://gtg.steem.house:8090', 'https://rpc.curiesteem.com', 'https://steemd.steemgigs.org', 'https://api.steemit.com', 'wss://appbasetest.timcliff.com', 'https://api.steem.house']
+from steembase.exceptions import PostDoesNotExist, RPCError
+nodenr = 1
+nodes = []
 post_urls = []
 # Account to track for blacklisted/muted users
 trackaccount = 'travelfeed'
@@ -20,6 +19,8 @@ trackaccount = 'travelfeed'
 tracktag = 'travelfeed'
 # Account (previously added in steempy) to post the comments
 postaccount = 'travelfeed-bot'
+# List of whitelisted users who are allowed to post short posts
+whitelist = ['tangofever']
 # Max. number of blacklisted (=muted) accounts to check
 abusersmax = 20
 # Comment for short posts 
@@ -32,13 +33,22 @@ def converter(object_):
 
 def stream_blockchain():
     try:
+        if nodenr%4 == 0: 
+            nodes = ['https://steemd.privex.io', 'https://api.steemit.com']
+        elif nodenr%4 == 1:
+            nodes = ['https://rpc.steemliberator.com', 'https://gtg.steem.house:8090']
+        elif nodenr%4 == 2:
+            nodes = ['https://steemd.pevo.science', 'https://rpc.steemviz.com']
+        else:
+            nodes = ['https://rpc.buildteam.io', 'https://steemd.minnowsupportproject.org']
         steem = Steem(wif=steemPostingKey,node=nodes)
         blockchain = Blockchain()
         stream = map(Post, blockchain.stream(filter_by=['comment']))
         abusers = steem.get_following(trackaccount, '', 'ignore', abusersmax)
         print(time.strftime('%X')+" Info: Stream from blockchain started")
     except Exception as error:
-        print(time.strftime('%X')+" Error: Could not start blockchain stream "+repr(error))
+        print(time.strftime('%X')+" Info: Could not start blockchain stream. Switching nodes. "+repr(error))
+        ++nodenr
         stream_blockchain()
     while True:
         try:
@@ -48,6 +58,8 @@ def stream_blockchain():
                     author = post["author"]
                     if permlink in post_urls:
                         print(time.strftime('%X')+" Info: Ignoring updated post")
+                    elif author in whitelist:
+                        print(time.strftime('%X')+" Info: Ignoring short post by whitelisted user")
                     elif any(d['following'] == author for d in abusers): 
                         try: 
                             post.reply(blacklisttext.format(author), "", postaccount)
@@ -86,11 +98,15 @@ def stream_blockchain():
                         except Exception as error:
                             print(time.strftime('%X')+" Warning: Error while processing post "+repr(error))
                             continue
+        except RPCError:
+            print(time.strftime('%X')+" Info: Blockchain Error. Switching node.")
+            ++nodenr
+            stream_blockchain()
         except PostDoesNotExist:
             print(time.strftime('%X')+" Info: Skipping invalid post")
             continue
         except Exception as error:
-            print(time.strftime('%X')+" Info: Skipping blockchain error "+repr(error))
-            stream_blockchain()
+            print(time.strftime('%X')+" Warning: Blockchain error "+repr(error))
+            continue
 if __name__ == '__main__':
     stream_blockchain()

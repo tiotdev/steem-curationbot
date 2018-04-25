@@ -12,6 +12,7 @@ from markdown import markdown
 from steembase.exceptions import (
     PostDoesNotExist
 )
+nodes = ['wss://steemd.privex.io', 'wss://steemd.pevo.science', 'wss://rpc.buildteam.io', 'wss://rpc.steemliberator.com', 'wss://gtg.steem.house:8090', 'wss://rpc.steemviz.com', 'wss://seed.bitcoiner.me', 'wss://steemd.steemgigs.org', 'wss://steemd.minnowsupportproject.org', 'https://rpc.buildteam.io', 'https://steemd.minnowsupportproject.org', 'https://steemd.pevo.science', 'https://rpc.steemviz.com', 'https://seed.bitcoiner.me', 'https://rpc.steemliberator.com', 'https://steemd.privex.io', 'https://gtg.steem.house:8090', 'https://rpc.curiesteem.com', 'https://steemd.steemgigs.org', 'https://api.steemit.com', 'wss://appbasetest.timcliff.com', 'https://api.steem.house']
 post_urls = []
 # Account to track for blacklisted/muted users
 trackaccount = 'travelfeed'
@@ -31,13 +32,14 @@ def converter(object_):
 
 def stream_blockchain():
     try:
-        steem = Steem(wif=steemPostingKey)
+        steem = Steem(wif=steemPostingKey,node=nodes)
         blockchain = Blockchain()
         stream = map(Post, blockchain.stream(filter_by=['comment']))
         abusers = steem.get_following(trackaccount, '', 'ignore', abusersmax)
         print(time.strftime('%X')+" Info: Stream from blockchain started")
     except Exception as error:
         print(time.strftime('%X')+" Error: Could not start blockchain stream "+repr(error))
+        stream_blockchain()
     while True:
         try:
             for post in stream:
@@ -89,7 +91,6 @@ def stream_blockchain():
             continue
         except Exception as error:
             print(time.strftime('%X')+" Info: Skipping blockchain error "+repr(error))
-            continue
-
+            stream_blockchain()
 if __name__ == '__main__':
     stream_blockchain()

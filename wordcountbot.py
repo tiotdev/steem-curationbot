@@ -1,23 +1,9 @@
-from steem import Steem
-import os
-steemPostingKey = os.environ.get('steemPostingKey')
-from steem.blockchain import Blockchain
-from steem.post import Post
-import json
-import datetime
-import re
-import time
-import random
-from bs4 import BeautifulSoup
-from markdown import markdown
-from steembase.exceptions import PostDoesNotExist
-from langdetect import detect
-import atexit
+### Configuration start: Adjust these variables
 # Account to track for blacklisted/muted users
 trackaccount = 'travelfeed'
 # Tag to search in
 tracktag = 'travelfeed'
-# Account (previously added in steempy) to post the comments
+# Account to post the comments
 postaccount = 'travelfeed-bot'
 # List of whitelisted users who are allowed to post short posts
 whitelist = ['tangofever']
@@ -31,12 +17,23 @@ blacklisttext = "Hi @{}, \n Thank you for participating in the #travelfeed curat
 wronglangtext = "Hi @{}, \n Thank you for participating in the #travelfeed curated tag. To maintain a level of quality on the project we have certain criteria that must be met for participation. Please review the following: https://steemit.com/travelfeed/@travelfeed/how-to-participate-use-travelfeed-in-your-posts \n **We require at least 250 words in English, but your post seems to be in another language.** (The language of your post was automatically detected, if your post is in English, please ignore this message.) \n Thank you very much for your interest and we hope to read some great travel articles from you soon! \n Regards, TravelFeed"
 # Define path for logging
 logpath = 'short_posts.log'
-try: 
-    with open(logpath) as f:
-        post_urls = f.read().splitlines()
-    file.close()
-except:
-    post_urls = []
+### Configuration end
+
+from steem import Steem
+import os
+steemPostingKey = os.environ.get('steemPostingKey') #Account's posting key needs to be added in steempy
+from steem.blockchain import Blockchain
+from steem.post import Post
+from steembase.exceptions import PostDoesNotExist
+from bs4 import BeautifulSoup
+from markdown import markdown
+from langdetect import detect
+import json
+import datetime
+import time
+import re
+import random
+
 def converter(object_):
     if isinstance(object_, datetime.datetime):
         return object_.__str__()
@@ -62,10 +59,11 @@ def stream_blockchain(starting_point):
                 stream_blockchain(None)
         stream = map(Post, blockchain.stream(filter_by=['comment'], start_block=starting_point))
         abusers = steem.get_following(trackaccount, '', 'ignore', abusersmax)
+        file = open(logpath, 'a+')
         print(time.strftime('%X')+" Info: Stream from blockchain started with nodes "+str(nodes).strip('[]')+" starting at block "+str(starting_point))
     except Exception as error:
         print(time.strftime('%X')+" Warning: Could not start blockchain stream. Switching nodes. "+repr(error))
-        stream_blockchain(None)
+        stream_blockchain(starting_point)
     while True:
         try:
             for post in stream:
@@ -75,6 +73,8 @@ def stream_blockchain(starting_point):
                     tags = []
                 if post.is_main_post() and tracktag in tags:
                     permlink = post['permlink']
+                    file.seek(0)
+                    post_urls = file.readlines()
                     author = post["author"]
                     commenttext = ""
                     if permlink in post_urls:
@@ -83,7 +83,7 @@ def stream_blockchain(starting_point):
                         print(time.strftime('%X')+" Info: Ignoring short post by whitelisted user @{}".format(author))
                     elif any(d['following'] == author for d in abusers): 
                         commenttext = blacklisttext
-                        print(time.strftime('%X')+" Success: Detected post by blacklisted user @{}".format(author))
+                        print(time.strftime('%X')+" Info: Detected post by blacklisted user @{}".format(author))
                     else:
                         try:
                             html = markdown(post["body"])
@@ -97,16 +97,17 @@ def stream_blockchain(starting_point):
                                 lang = "en"
                             if not lang == "en":
                                 commenttext = wronglangtext
+                                print(time.strftime('%X')+" Info: Detected post by @{} who posted in {}".format(author, lang))
                             elif count < 250:
                                 commenttext = shortposttext
-                                print(time.strftime('%X')+" Success: Detected short post by @{} who posted with just {} words".format(author, count))
+                                print(time.strftime('%X')+" Info: Detected short post by @{} who posted with just {} words".format(author, count))
                         except Exception as error:
                             print(time.strftime('%X')+" Warning: Error during content processing "+repr(error))
                             continue
                     if not commenttext == "":
                         try:
                             post.reply(commenttext.format(author, count), "", postaccount)
-                            print(time.strftime('%X')+" Success: I sucessfully left a comment for @{}".format(author))              
+                            print(time.strftime('%X')+" Success: I sucessfully left a comment for @{}".format(author))
                         except:
                             print(time.strftime('%X')+" Info: There was an error posting the comment, could be due to the 20 second limit on comments. I will try again.")
                             time.sleep(19)
@@ -118,7 +119,7 @@ def stream_blockchain(starting_point):
                                 continue
                     else:
                         print(time.strftime('%X')+" Info: Ignoring awesome post by @{}".format(author))
-                    post_urls.append(permlink)
+                    file.write("\n"+permlink)
         except PostDoesNotExist:
             print(time.strftime('%X')+" Info: Skipping blockchain error")
             continue
@@ -127,18 +128,11 @@ def stream_blockchain(starting_point):
                 props = steem.get_dynamic_global_properties()
                 starting_point = props['last_irreversible_block_num']
             except:
-                starting_point = None
+                starting_point = starting_point
             print(time.strftime('%X')+" Warning at block "+str(starting_point)+": "+repr(error))
+            file.close()
             stream_blockchain(starting_point)
-
-def exit_handler():
-    file = open(logpath, 'a+')
-    for item in post_urls:
-        file.write("%s\n" % item)
-    file.close()
 
 if __name__ == '__main__':
     starting_point=None
     stream_blockchain(starting_point)
-
-atexit.register(exit_handler)

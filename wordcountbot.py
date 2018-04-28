@@ -6,7 +6,7 @@ tracktag = 'travelfeed'
 # Account to post the comments
 postaccount = 'travelfeed-bot'
 # List of whitelisted users who are allowed to post short posts
-whitelist = ['tangofever']
+whitelist = ['travelfeed', 'tangofever']
 # Max. number of blacklisted (=muted) accounts to check
 abusersmax = 20
 # Comment for short posts 
@@ -16,7 +16,7 @@ blacklisttext = "Hi @{}, \n Thank you for participating in the #travelfeed curat
 # Comment for other languages
 wronglangtext = "Hi @{}, \n Thank you for participating in the #travelfeed curated tag. To maintain a level of quality on the project we have certain criteria that must be met for participation. Please review the following: https://steemit.com/travelfeed/@travelfeed/how-to-participate-use-travelfeed-in-your-posts \n **We require at least 250 words in English, but your post seems to be in another language.** (The language of your post was automatically detected, if your post is in English, please ignore this message.) \n Thank you very much for your interest and we hope to read some great travel articles from you soon! \n Regards, TravelFeed"
 # Define path for logging
-logpath = 'short_posts.log'
+logpath = 'posts.log'
 ### Configuration end
 
 from steem import Steem
@@ -41,14 +41,14 @@ def converter(object_):
 def stream_blockchain(starting_point):
     try:
         nodenr = random.randint(1, 4)
-        if nodenr%4 == 0: 
-            nodes = ['https://rpc.buildteam.io', 'wss://steemd.steemgigs.org']
-        elif nodenr%4 == 1:
-            nodes = ['https://rpc.steemliberator.com', 'wss://gtg.steem.house:8090']
-        elif nodenr%4 == 2:
-            nodes = ['wss://steemd.privex.io', 'https://rpc.steemviz.com']
+        if nodenr == 1: 
+            nodes = ['https://rpc.buildteam.io', 'wss://steemd.pevo.science']
+        elif nodenr == 2:
+            nodes = ['https://steemd.pevo.science', 'wss://appbasetest.timcliff.com']
+        elif nodenr == 3:
+            nodes = ['wss://steemd.privex.io', 'wss://steemd.minnowsupportproject.org']
         else:
-            nodes = ['wss://steemd.pevo.science', 'https://api.steemit.com']
+            nodes = ['wss://rpc.steemviz.com', 'https://api.steemit.com']
         steem = Steem(wif=steemPostingKey,node=nodes)
         blockchain = Blockchain()
         if not starting_point:
@@ -72,15 +72,17 @@ def stream_blockchain(starting_point):
                 except:
                     tags = []
                 if post.is_main_post() and tracktag in tags:
-                    permlink = post['permlink']
+                    author = post["author"]
+                    postlink = "@"+author+"/"+post['permlink']
                     file.seek(0)
                     post_urls = file.readlines()
-                    author = post["author"]
                     commenttext = ""
-                    if permlink in post_urls:
+                    if postlink in post_urls:
                         print(time.strftime('%X')+" Info: Ignoring updated post")
+                        continue
                     elif author in whitelist:
                         print(time.strftime('%X')+" Info: Ignoring short post by whitelisted user @{}".format(author))
+                        continue
                     elif any(d['following'] == author for d in abusers): 
                         commenttext = blacklisttext
                         print(time.strftime('%X')+" Info: Detected post by blacklisted user @{}".format(author))
@@ -101,6 +103,8 @@ def stream_blockchain(starting_point):
                             elif count < 250:
                                 commenttext = shortposttext
                                 print(time.strftime('%X')+" Info: Detected short post by @{} who posted with just {} words".format(author, count))
+                            else:
+                                print(time.strftime('%X')+" Info: Ignoring awesome post by @{}".format(author))
                         except Exception as error:
                             print(time.strftime('%X')+" Warning: Error during content processing "+repr(error))
                             continue
@@ -117,16 +121,16 @@ def stream_blockchain(starting_point):
                             except:
                                 print(time.strftime('%X')+" Warning: Nope, still an error, I could not levae a comment for (@{}) due to this error: ".format(author)+repr(error))
                                 continue
-                    else:
-                        print(time.strftime('%X')+" Info: Ignoring awesome post by @{}".format(author))
-                    file.write("\n"+permlink)
+                    file.write("\n"+postlink)
+                    file.close()
+                    file = open(logpath, 'a+')
         except PostDoesNotExist:
-            print(time.strftime('%X')+" Info: Skipping blockchain error")
+            print(time.strftime('%X')+" Info: Skipping node error")
             continue
         except Exception as error:
             try:
                 props = steem.get_dynamic_global_properties()
-                starting_point = props['last_irreversible_block_num']
+                starting_point = props['last_irreversible_block_num']-1
             except:
                 starting_point = starting_point
             print(time.strftime('%X')+" Warning at block "+str(starting_point)+": "+repr(error))
@@ -134,5 +138,6 @@ def stream_blockchain(starting_point):
             stream_blockchain(starting_point)
 
 if __name__ == '__main__':
+    print(time.strftime('%X')+" Info: Bot started")
     starting_point=None
     stream_blockchain(starting_point)

@@ -75,7 +75,7 @@ def stream_blockchain(starting_point):
                     author = post["author"]
                     postlink = "@"+author+"/"+post['permlink']
                     file.seek(0)
-                    post_urls = file.readlines()
+                    post_urls = file.read().splitlines()
                     commenttext = ""
                     if postlink in post_urls:
                         print(time.strftime('%X')+" Info: Ignoring updated post")

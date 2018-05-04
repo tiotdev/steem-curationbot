@@ -7,7 +7,7 @@ tracktag = 'travelfeed'
 # Account to post the comments
 postaccount = 'travelfeed-bot'
 # List of whitelisted users who are allowed to post short posts
-whitelist = ['travelfeed', 'tangofever']
+whitelist = ['travelfeed', 'tangofever', 'steemitworldmap', 'de-travelfeed']
 # Comment for short posts 
 shortposttext = "Hi @{}, \n Thank you for participating in the #travelfeed curated tag. To maintain a level of quality on the project we have certain criteria that must be met for participation. Please review the following: https://steemit.com/travelfeed/@travelfeed/how-to-participate-use-travelfeed-in-your-posts \n **We require at least 250 words, but your post has only {} words.** \n Thank you very much for your interest and we hope to read some great travel articles from you soon! \n Regards, @travelfeed"
 # Comment for blacklisted users
@@ -16,6 +16,8 @@ blacklisttext = "Hi @{}, \n Thank you for participating in the #travelfeed curat
 wronglangtext = "Hi @{}, \n Thank you for participating in the #travelfeed curated tag. To maintain a level of quality on the project we have certain criteria that must be met for participation. Please review the following: https://steemit.com/travelfeed/@travelfeed/how-to-participate-use-travelfeed-in-your-posts \n **We require at least 250 words in English, but your post seems to be in another language.** (The language of your post was automatically detected, if your post is in English, please ignore this message.) \n Thank you very much for your interest and we hope to read some great travel articles from you soon! \n Regards, @travelfeed"
 # Define path for logging
 logpath = 'posts.log'
+# Define path for block logging
+blocklog = 'block.log'
 ## Settings for adbot
 # Tag1 to search in (only occurence together tag 2)
 adtag1 = 'travel'
@@ -174,8 +176,14 @@ def stream_blockchain(starting_point):
             file.close()
             adfile.close()
             stream_blockchain(starting_point)
+        post.clear_cache()
 
 if __name__ == '__main__':
     print(time.strftime('%X')+" Info: Bot started")
-    starting_point=None
+    try:
+        blockfile = open(blocklog, 'r')
+        starting_point = int(blockfile.read())
+        blockfile.close()
+    except:
+        starting_point=None
     stream_blockchain(starting_point)

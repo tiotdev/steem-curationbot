@@ -111,12 +111,12 @@ def stream_blockchain(starting_point):
                         try:
                             content = re.sub(r'\w+:\/{2}[\d\w-]+(\.[\d\w-]+)*(?:(?:\/[^\s/]*))*', '', ''.join(BeautifulSoup(markdown(post["body"]), "html.parser").findAll(text=True)))
                             count = len(content.split(" "))
-                            if not is_eligible(content, 250, "en"):
-                                commenttext = wronglangtext
-                                print(time.strftime('%X')+" Info: Detected post by @{} who posted not in English".format(author))
-                            elif count < 250:
+                            if count < 250:
                                 commenttext = shortposttext
                                 print(time.strftime('%X')+" Info: Detected short post by @{} who posted with just {} words".format(author, count))
+                            elif not is_eligible(content, 250, "en"):
+                                commenttext = wronglangtext
+                                print(time.strftime('%X')+" Info: Detected post by @{} who posted not in English".format(author))
                             else:
                                 print(time.strftime('%X')+" Info: Ignoring awesome post by @{}".format(author))
                         except Exception as error:
@@ -132,7 +132,7 @@ def stream_blockchain(starting_point):
                             try:
                                 post.reply(commenttext.format(author, count), author=postaccount)
                                 print(time.strftime('%X')+" Success: Cool, now it worked, I successfully left a comment for @{}!".format(author))
-                            except:
+                            except Exception as error:
                                 print(time.strftime('%X')+" Warning: Nope, still an error, I could not levae a comment for (@{}) due to this error: ".format(author)+repr(error))
                                 continue
                     file.write("\n"+postlink)
@@ -146,21 +146,21 @@ def stream_blockchain(starting_point):
                     if is_eligible(content, 300, "de") and not author in author_list:
                         print(time.strftime('%X')+" Success: I detected a post by @{} eligable for an advertisement comment".format(author))
                         try:
-                            post.reply(adtext.format(author, count), author=adpostaccount)
+                            post.reply(adtext.format(author), author=adpostaccount)
                             adfile.write("\n"+author)
                             print(time.strftime('%X')+" Success: I sucessfully left a comment for @{}".format(author))
                         except:
                             print(time.strftime('%X')+" Info: There was an error posting the comment, could be due to the 20 second limit on comments. I will try again.")
                             time.sleep(19)
                             try:
-                                post.reply(adtext.format(author, count), author=adpostaccount)
+                                post.reply(adtext.format(author), author=adpostaccount)
                                 adfile.write("\n"+author)
                                 print(time.strftime('%X')+" Success: Cool, now it worked, I successfully left a comment for @{}!".format(author))
-                            except:
+                            except Exception as error:
                                 print(time.strftime('%X')+" Warning: Nope, still an error, I could not levae a comment for (@{}) due to this error: ".format(author)+repr(error))
                                 continue
                         adfile.close()
-                        adfile = open(logpath, 'a+')
+                        adfile = open(autpath, 'a+')
         except ContentDoesNotExistsException:
             print(time.strftime('%X')+" Info: Skipping node error")
             continue

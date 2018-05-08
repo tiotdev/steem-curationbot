@@ -11,9 +11,9 @@ whitelist = ['travelfeed', 'tangofever', 'steemitworldmap', 'de-travelfeed']
 # Comment for short posts 
 shortposttext = "Hi @{}, \n Thank you for participating in the #travelfeed curated tag. To maintain a level of quality on the project we have certain criteria that must be met for participation. Please review the following: https://steemit.com/travelfeed/@travelfeed/how-to-participate-use-travelfeed-in-your-posts \n **We require at least 250 words, but your post has only {} words.** \n Thank you very much for your interest and we hope to read some great travel articles from you soon! \n Regards, @travelfeed"
 # Comment for blacklisted users
-blacklisttext = "Hi @{}, \n Thank you for participating in the #travelfeed curated tag. To maintain a level of quality on the project we have certain criteria that must be met for participation. Please review the following: https://steemit.com/travelfeed/@travelfeed/how-to-participate-use-travelfeed-in-your-posts \n **You are currently blacklisted from the TravelFeed curation.** \n This is most likely because we have detected plagiarism in one of your posts in the past. If you believe that this is a mistake, please contact us on the [Steemit Travellers Discord](https://discord.gg/jWWu73H). c \n Regards, @travelfeed"
+blacklisttext = "Hi @{}, \n Thank you for participating in the #travelfeed curated tag. To maintain a level of quality on the project we have certain criteria that must be met for participation. Please review the following: https://steemit.com/travelfeed/@travelfeed/how-to-participate-use-travelfeed-in-your-posts \n **You are currently blacklisted from the TravelFeed curation.** \n This is most likely because we have detected plagiarism in one of your posts in the past. If you believe that this is a mistake, please contact us on the [Steemit Travellers Discord](https://discord.gg/jWWu73H). \n Regards, @travelfeed"
 # Comment for other languages
-wronglangtext = "Hi @{}, \n Thank you for participating in the #travelfeed curated tag. To maintain a level of quality on the project we have certain criteria that must be met for participation. Please review the following: https://steemit.com/travelfeed/@travelfeed/how-to-participate-use-travelfeed-in-your-posts \n **We require at least 250 words in English, but your post seems to be in another language.** (The language of your post was automatically detected, if your post is in English, please ignore this message.) \n Thank you very much for your interest and we hope to read some great travel articles from you soon! \n Regards, @travelfeed"
+wronglangtext = "Hi @{}, \n Thank you for participating in the #travelfeed curated tag. To maintain a level of quality on the project we have certain criteria that must be met for participation. Please review the following: https://steemit.com/travelfeed/@travelfeed/how-to-participate-use-travelfeed-in-your-posts \n We require at least 250 words **in English**. (The language of your post was automatically detected, if your English text is at least 250 words long, please ignore this message.) \n Thank you very much for your interest and we hope to read some great travel articles from you soon! \n Regards, @travelfeed"
 # Define path for logging
 logpath = 'posts.log'
 # Define path for block logging
@@ -32,7 +32,7 @@ autpath = 'author_list.log'
 # Account to post the comments
 adpostaccount = 'de-travelfeed'
 # Comment for advertising
-adtext = "Hey @{}, wusstest du schon, dass es jetzt einen eigenen Tag für Reiseposts auf Deutsch gibt? Die Verwendung des kurierten #de-travelfeed Tags belohnt täglich Autoren, die außergewöhnliche Reise-Artikel produzieren, mit Resteems und Upvotes (inklusive Upvotes von @travelfeed und über 50 Followern des TravelFeed Curation-Trails). Wir freuen uns darauf, deine nächsten Reiseposts in #de-travelfeed zu finden (Minimum 250 Wörter auf Deutsch)! \n Hier kannst du mehr über uns erfahren: https://steemit.com/de-travelfeed/@de-travelfeed/de-travelfeed-der-tag-fuer-deutschsprachige-reisende \n Für Englische Reiseposts, schau dir #travelfeed bzw. @travelfeed an! \n <center>[![Transparent-Discord-Travel.png](https://steemitimages.com/DQmQU6Zt9ifnhvTkB8YE8jq8t4AeLMUUQhKBkoyF8Zh4zrp/Transparent-Discord-Travel.png)](https://discord.gg/jWWu73H)</center>"
+adtext = "Hey @{}, \n Wusstest du schon, dass es jetzt einen eigenen Tag für Reiseposts auf Deutsch gibt? Die Verwendung des kurierten #de-travelfeed Tags belohnt täglich Autoren, die außergewöhnliche Reise-Artikel produzieren, mit Resteems und Upvotes (inklusive Upvotes von @travelfeed und über 50 Followern des TravelFeed Curation-Trails). \n Wir freuen uns darauf, deine nächsten Reiseposts in #de-travelfeed zu finden (Minimum 250 Wörter auf Deutsch)! \n Hier kannst du mehr über uns erfahren: https://steemit.com/de-travelfeed/@de-travelfeed/de-travelfeed-der-tag-fuer-deutschsprachige-reisende \n Für Englische Reiseposts, schau dir #travelfeed bzw. @travelfeed an! \n <center>[![Transparent-Discord-Travel.png](https://steemitimages.com/DQmQU6Zt9ifnhvTkB8YE8jq8t4AeLMUUQhKBkoyF8Zh4zrp/Transparent-Discord-Travel.png)](https://discord.gg/jWWu73H)</center>"
 ### Configuration end
 
 from beem import Steem
@@ -60,6 +60,7 @@ def is_eligible(text, n, lng):
     Returns True if text contains at least n words in the specified lng language.
     """
     for language in detect_langs(text):
+        
         if language.lang == lng:
             probability = language.prob
             word_count = len(text.split(" "))
@@ -104,7 +105,7 @@ def stream_blockchain(starting_point):
                         print(time.strftime('%X')+" Info: Ignoring updated post")
                         continue
                     elif author in whitelist:
-                        print(time.strftime('%X')+" Info: Ignoring short post by whitelisted user @{}".format(author))
+                        print(time.strftime('%X')+" Info: Ignoring post by whitelisted user @{}".format(author))
                         continue
                     elif author in blacklist: 
                         commenttext = blacklisttext
@@ -116,7 +117,7 @@ def stream_blockchain(starting_point):
                             if count < 250:
                                 commenttext = shortposttext
                                 print(time.strftime('%X')+" Info: Detected short post by @{} who posted with just {} words".format(author, count))
-                            elif not is_eligible(content, 250, "en"):
+                            elif not is_eligible(content, 220, "en"):
                                 commenttext = wronglangtext
                                 print(time.strftime('%X')+" Info: Detected post by @{} who posted not in English".format(author))
                             else:
@@ -163,8 +164,8 @@ def stream_blockchain(starting_point):
                                 continue
                         adfile.close()
                         adfile = open(autpath, 'a+')
+                post.clear_cache()
         except ContentDoesNotExistsException:
-            print(time.strftime('%X')+" Info: Skipping node error")
             continue
         except Exception as error:
             try:
@@ -176,7 +177,6 @@ def stream_blockchain(starting_point):
             file.close()
             adfile.close()
             stream_blockchain(starting_point)
-        post.clear_cache()
 
 if __name__ == '__main__':
     print(time.strftime('%X')+" Info: Bot started")

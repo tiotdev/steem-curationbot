@@ -88,15 +88,15 @@ def stream_blockchain(starting_point):
         adfile = open(autpath, 'a+')
         print(time.strftime('%X')+" Info: Stream from blockchain started at block "+str(starting_point))
     except Exception as error:
-        print(time.strftime('%X')+" Warning: Could not start blockchain stream. Switching nodes. "+repr(error))
+        print(time.strftime('%X')+" Warning: Could not start blockchain stream "+repr(error))
         stream_blockchain(starting_point)
     while True:
         try:
             for post in stream:
                 post.refresh()
                 tags = post["tags"]
+                author = post["author"]
                 if post.is_main_post() and tracktag in tags:
-                    author = post["author"]
                     postlink = "@"+author+"/"+post['permlink']
                     file.seek(0)
                     post_urls = file.read().splitlines()
@@ -142,7 +142,6 @@ def stream_blockchain(starting_point):
                     file.close()
                     file = open(logpath, 'a+')
                 elif post.is_main_post() and ((adtag1 in tags and adtag2 in tags) or adtag3 in tags) and not adignore in tags:
-                    author = post["author"]
                     adfile.seek(0)
                     author_list = adfile.readlines()
                     content = re.sub(r'\w+:\/{2}[\d\w-]+(\.[\d\w-]+)*(?:(?:\/[^\s/]*))*', '', ''.join(BeautifulSoup(markdown(post["body"]), "html.parser").findAll(text=True)))
@@ -164,6 +163,11 @@ def stream_blockchain(starting_point):
                                 continue
                         adfile.close()
                         adfile = open(autpath, 'a+')
+                elif author == trackaccount:
+                    try:
+                        post.upvote(weight=100, voter=postaccount)
+                    except:
+                        print(time.strftime('%X')+" Warning: Could not autovote on comment/post")
                 post.clear_cache()
         except ContentDoesNotExistsException:
             continue

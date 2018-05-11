@@ -143,7 +143,7 @@ def stream_blockchain(starting_point):
                     file = open(logpath, 'a+')
                 elif post.is_main_post() and ((adtag1 in tags and adtag2 in tags) or adtag3 in tags) and not adignore in tags:
                     adfile.seek(0)
-                    author_list = adfile.readlines()
+                    author_list = adfile.read().splitlines()
                     content = re.sub(r'\w+:\/{2}[\d\w-]+(\.[\d\w-]+)*(?:(?:\/[^\s/]*))*', '', ''.join(BeautifulSoup(markdown(post["body"]), "html.parser").findAll(text=True)))
                     if is_eligible(content, 300, "de") and not author in author_list:
                         print(time.strftime('%X')+" Success: I detected a post by @{} eligable for an advertisement comment".format(author))
@@ -163,12 +163,11 @@ def stream_blockchain(starting_point):
                                 continue
                         adfile.close()
                         adfile = open(autpath, 'a+')
-                elif author == trackaccount:
+                elif author == trackaccount or author == postaccount or author == adpostaccount:
                     try:
-                        post.upvote(weight=100, voter=postaccount)
+                        post.upvote(weight=55, voter=postaccount)
                     except:
                         print(time.strftime('%X')+" Warning: Could not autovote on comment/post")
-                post.clear_cache()
         except ContentDoesNotExistsException:
             continue
         except Exception as error:

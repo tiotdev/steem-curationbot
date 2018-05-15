@@ -18,5 +18,18 @@ The passphrase of the steem-python wallet (not Steem key!) needs to be exportet:
 >export UNLOCK='your-passphrase'
 
 ## Usage
-Adjust the variables. 
-Tip: Run with tmux as described here: https://steemit.com/utopian-io/@steempytutorials/part-3-creating-a-dynamic-upvote-bot-that-runs-24-7-first-weekly-challenge-3-steem-prize-pool
+Adjust the configuration variables. 
+
+Open a new tmux shell:
+>tmux new -s wordcountbot
+
+Start the bot:
+> python -u wordcountbot.py
+
+### Want to use the WEB UI?
+Configure a webserver on the same server that your bot runs on and set a password in the configuration file *example.config.php* and safe it to *config.php*. 
+
+You can now start the bot with:
+> python -u wordcountbot.py >> pylog.log
+
+It is recommended to run the bot from a folder not accessible from the web. You can specify the local path to the logfiles in the config.php

@@ -402,7 +402,6 @@ async def scan_post(post,file,adfile):
         author = post["author"]
         body = post["body"]
         authorperm = construct_authorperm(author, post['permlink'])
-        logging.info(authorperm)
         if post.is_comment():
             """
             Upvotes and comments on the post if a curator uses the invocation command in a comment
@@ -561,7 +560,6 @@ async def stream_rewards():
     acc = Account("travelfeed")
     stop = datetime.utcnow() - timedelta(hours=6)
     for reward in acc.history_reverse(stop=stop, only_ops=["author_reward"]):
-        print(str(reward))
         logger.info("Found reward")
         steemreward = float(re.sub("( STEEM)",'',reward['steem_payout'],re.IGNORECASE|re.DOTALL))
         authorperm = construct_authorperm(reward["author"], reward["permlink"])

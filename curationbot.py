@@ -3,7 +3,6 @@ from beem.blockchain import Blockchain
 from beem.comment import Comment
 from beem.account import Account
 from beem.nodelist import NodeList
-from beem.memo import Memo
 from beem.instance import set_shared_steem_instance
 from beem.exceptions import ContentDoesNotExistsException
 from beem.utils import construct_authorperm, resolve_authorperm
@@ -33,7 +32,7 @@ tracktag = 'travelfeed'
 # Account to perform curation actions (can be different from tracked curation account)
 postaccount = 'travelfeed'
 # List of curators by Steem username
-curatorlist = ['travelfeed', 'for91days', 'rimicane', 'guchtere', 'mrprofessor', 'jpphotography']
+curatorlist = ['for91days', 'rimicane', 'guchtere', 'mrprofessor', 'jpphotography']
 # List of curators by Discord ID
 discordcuratorlist = ['386832984487231490', '385782450288328704', '347827940702289920', '433065572901584907', '264508921899646980']
 # ID of the Discord bot
@@ -76,8 +75,7 @@ TOKEN = os.environ.get('TOKEN') #Discord secret token must be set as environment
 logger = logging.getLogger(__name__)
 logging.basicConfig(filename=logpath, format='%(asctime)s %(levelname)s: %(message)s', level=logging.INFO) #Log to file: filename=logpath
 node_list = NodeList().get_nodes()
-steem = Steem(node=node_list, num_retries=5, call_num_retries=3, timeout=15)
-set_shared_steem_instance(steem)
+steem = Steem(node=node_list)
 steem.set_default_nodes(node_list)
 steem.wallet.unlock(walletpw)
 blockchain = Blockchain()
@@ -269,6 +267,19 @@ Custom Discord commands that return info fetched from the Blockchain
 async def rewards(ctx, username):
     history = get_history(username)
     await bot.say(history+" in the past 7 days")
+
+@bot.command(pass_context=True)
+async def mana():
+    acc = Account("travelfeed")
+    mana = acc.get_manabar()
+    await bot.say("The voting mana of @travelfeed is **"+str(round(mana['estimated_pct'], 2))+"**")
+
+@bot.command(pass_context=True)
+async def payouts(ctx, time):
+    await bot.say("Fetching rewards history for the past **"+time+"** days to #rewards_log")
+    await loop.create_task(send_discord("*Manual queing initiated*", "reward"))
+    await stream_rewards(time)
+    await loop.create_task(send_discord("*Manual queing ended*", "reward"))
 
 """
 Queue functions
@@ -513,7 +524,9 @@ async def stream_history():
     """
     acc = Account(trackaccount)
     stop = datetime.utcnow() - timedelta(days=7)
-    while True:
+    while True:        
+        honours = {}
+        resteems = {}
         for vote in acc.history_reverse(stop=stop, only_ops=["vote"]):
             if vote["voter"] == trackaccount and vote["weight"] == 5000:
                 if vote["author"] not in honours:
@@ -528,45 +541,78 @@ async def stream_history():
         logger.info("Got history from Blockchain")
         await asyncio.sleep(60*60) #sleep 1 hour
         
-async def stream_rewards(): # Custom function for travelfeed, modify the code below if you are planning to use it
+async def stream_rewards(rewardtime): # Custom function for travelfeed, modify the code below if you are planning to use it
     """
     Background task: Scans blockchain for travelfeed author rewards, extracts mentions and determines which reward should be sent to mentioned users every six hours
     Todo when code has been tested: Send out rewards automatically
     """
-    acc = Account(trackaccount)
-    stop = datetime.utcnow() - timedelta(hours=6)
-    for reward in acc.history_reverse(stop=stop, only_ops=["author_reward"]):
-        logger.info("Found reward")
-        steemreward = float(re.sub("( STEEM)",'',reward['steem_payout'],re.IGNORECASE|re.DOTALL))
-        authorperm = construct_authorperm(reward["author"], reward["permlink"])
-        post = Comment(authorperm)
-        if not "Weekly Round-Up" in post["title"]:
-            logger.info("Ignoring reward for other post")
-            continue
-        elif "TRAVELFEED WEEKLY ROUND-UP" in post["title"]:
-            logger.info("Ignoring reward for weekly round-up")
-            continue
-        myre = re.compile(r"@([a-zA-Z0-9-]+)<")
-        mentions = list(set(myre.findall(post["body"])))
-        for curator in curatorlist:
-            if curator in mentions:
-                mentions.remove(curator)
-        if "steemitworldmap" in mentions:
-            mentions.remove('steemitworldmap')
-        memo = "Congratulations! Here comes your reward for being featured in "+post["title"]+" https://steemit.com/travelfeed/"+authorperm
-        mentionsnr = len(mentions)
-        if mentionsnr == 0:
-            continue
-        elif mentionsnr <= 2 :
-            logger.warning("Rewards less than 3 users: Attention required!") #todo: better calculation
-            await loop.create_task(send_discord("ATTENTION REQUIRED! Found author reward "+str(steemreward)+" STEEM for post https://steemit.com/"+authorperm+" split between LESS THAN 3 USERS! Memo: "+memo, "reward"))
-            continue
+    try:
+        if rewardtime == None:
+            rewardtime = 6
         else:
-            payout = round((1/(mentionsnr*2)*steemreward), 3)
-        await loop.create_task(send_discord("Found author reward "+str(steemreward)+" STEEM for post https://steemit.com/"+authorperm+" split between the users "+str(mentions)+" who will each receive "+str(payout)+" STEEM. Memo: "+memo, "reward"))
-    logger.info("Got rewards from Blockchain")
-    await asyncio.sleep(60*60*6) #sleep for 6 hours
-        
+            rewardtime = int(rewardtime)*24
+        acc = Account(trackaccount)
+        stop = datetime.utcnow() - timedelta(hours=rewardtime)
+        for reward in acc.history_reverse(stop=stop, only_ops=["author_reward"]):
+            authorperm = construct_authorperm(reward["author"], reward["permlink"])
+            post = Comment(authorperm)
+            if not "Weekly Round-Up" in post["title"]:
+                logger.info("Ignoring reward for other post: "+authorperm)
+                return
+            if reward['sbd_payout'] == '0.000 SBD':
+                sbdreward = None
+            else:
+                sbdreward = float(re.sub("( SBD)",'',reward['sbd_payout'],re.IGNORECASE|re.DOTALL))
+            if reward['steem_payout'] == '0.000 STEEM':
+                steemreward = None
+            else:
+                steemreward = float(re.sub("( STEEM)",'',reward['steem_payout'],re.IGNORECASE|re.DOTALL))
+            myre = re.compile(r"@([a-zA-Z0-9-]+)<")
+            mentions = list(myre.findall(post["body"]))
+            for curator in curatorlist:
+                if curator in mentions:
+                    mentions.remove(curator)
+            while True:
+                if "travelfeed" in mentions:
+                    mentions.remove('travelfeed')
+                elif "steemitworldmap" in mentions:
+                    mentions.remove('steemitworldmap')
+                else:
+                    break
+            memo = "Congratulations! Here comes your reward for being featured in "+post["title"]+" https://steemit.com/travelfeed/"+authorperm
+            mentionsdict = {x:mentions.count(x) for x in mentions}
+            mentionsnr = len(mentions)
+            if mentionsnr == 0:
+                return
+            elif mentionsnr > 3:
+                logging.warning("Could not get rewards for post "+authorperm+": Mentions more than three")
+                return
+            logger.info("Found author reward of "+str(steemreward)+" STEEM for post https://steemit.com/"+authorperm)
+            if steemreward == None:
+                await loop.create_task(send_discord("Found author reward of "+str(sbdreward)+" SBD for post https://steemit.com/"+authorperm+". Half of the liquid SBD rewards will be split between the featured authors "+str(mentions)+". Memo: `"+memo+"`", "reward"))
+                for postauthor in mentionsdict:
+                    payout = round((mentionsdict[postauthor]/(mentionsnr*2)*sbdreward), 3)
+                    await loop.create_task(send_discord("Please send the reward of **"+str(payout)+" SBD** to **"+postauthor+"**", "reward"))
+            elif sbdreward == None:
+                await loop.create_task(send_discord("Found author reward of "+str(steemreward)+" STEEM for post https://steemit.com/"+authorperm+". Half of the liquid STEEM rewards will be split between the featured authors "+str(mentions)+". Memo: `"+memo+"`", "reward"))
+                for postauthor in mentionsdict:
+                    payout = round((mentionsdict[postauthor]/(mentionsnr*2)*steemreward), 3)
+                    await loop.create_task(send_discord("Please send the reward of **"+str(payout)+" Steem** to **"+postauthor+"**", "reward"))
+            else:
+                await loop.create_task(send_discord("Found author reward of "+str(steemreward)+" STEEM and "+str(sbdreward)+" SBD for post https://steemit.com/"+authorperm+". Half of the liquid rewards will be split between the featured authors "+str(mentions)+". Memo: `"+memo+"`", "reward"))
+                for postauthor in mentionsdict:
+                    steempayout = round((mentionsdict[postauthor]/(mentionsnr*2)*steemreward), 3)
+                    sbdpayout = round((mentionsdict[postauthor]/(mentionsnr*2)*sbdreward), 3)
+                    await loop.create_task(send_discord("Please send the reward of **"+str(steempayout)+" Steem** and **"+str(sbdpayout)+" SBD** to **"+postauthor+"**", "reward"))
+            await loop.create_task(send_discord(":boom: :boom: :boom: :boom: :boom: :boom:", "reward"))
+        logger.info("Got rewards from Blockchain")
+        if rewardtime == None:
+            await asyncio.sleep(60*60*6) #sleep for 6 hours
+        else:
+            return
+    except Exception as error:
+        logger.warning("Could not stream rewards: "+repr(error))
+
 def stream_comments(sync_q):
     """
     Main task: Runs the Blockchain stream
@@ -701,8 +747,6 @@ def stream_comments(sync_q):
                         adfile = open(autpath, 'a+')
         except ContentDoesNotExistsException:
             continue
-        except LangDetectException:
-            continue
         except Exception as error:
             logger.warning("Exception during post processing: "+repr(error))
 
@@ -714,7 +758,7 @@ if __name__ == '__main__':
     queue = janus.Queue(loop=loop) #janus enables the synchronous beem library to work with the asynchronous Discord.py library
     actionqueue = queue.sync_q
     loop.create_task(stream_history())
-    loop.create_task(stream_rewards())
+    loop.create_task(stream_rewards(None))
     loop.create_task(queue_worker(actionqueue))
     threaded = loop.run_in_executor(None, stream_comments, actionqueue)
     while True:

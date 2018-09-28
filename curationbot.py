@@ -12,7 +12,8 @@ from langdetect import detect_langs
 from datetime import datetime, timedelta
 from discord.ext import commands
 from discord.ext.commands import Bot
-import os, re, discord, asyncio, logging, json, requests, janus
+from geopy.geocoders import Nominatim
+import os, re, discord, asyncio, logging, json, requests, janus, pycountry, pycountry_convert
 
 """
 Configuration: Make adjustments here
@@ -121,7 +122,7 @@ async def on_reaction_add(reaction, user):
     Initiate curation process by adding a reaction
     """
     if reaction.message.content.startswith('http'):
-        curator = re.sub('\d|\W|(TravelFeed)','',str(user),re.IGNORECASE|re.DOTALL)
+        curator = re.sub(r'\d|\W|(TravelFeed)','',str(user),re.IGNORECASE|re.DOTALL)
         if not user.id in discordcuratorlist and not user.id == botid:
             """Checks if user who added reaction is a curator"""
             await loop.create_task(send_discord("Curator unauthorised: "+curator, "log"))
@@ -156,7 +157,7 @@ Initiate curation process by using Discord commands
 """
 @bot.command(pass_context=True)
 async def tf100(ctx, link):
-    curator = re.sub('\d|\W|(TravelFeed)','',str(ctx.message.author),re.IGNORECASE|re.DOTALL)
+    curator = re.sub(r'\d|\W|(TravelFeed)','',str(ctx.message.author),re.IGNORECASE|re.DOTALL)
     if not ctx.message.channel.id == commandchannel:
         """Checks if the command was set in the correct channel"""
         await loop.create_task(send_discord("Bot commands are only allowed in #bot-commands", ctx.message.channel.id))
@@ -173,7 +174,7 @@ async def tf100(ctx, link):
 
 @bot.command(pass_context=True)
 async def tf50(ctx, link):
-    curator = re.sub('\d|\W|(TravelFeed)','',str(ctx.message.author),re.IGNORECASE|re.DOTALL)
+    curator = re.sub(r'\d|\W|(TravelFeed)','',str(ctx.message.author),re.IGNORECASE|re.DOTALL)
     if not ctx.message.channel.id == commandchannel:
         await loop.create_task(send_discord("Bot commands are only allowed in #bot-commands", ctx.message.channel.id))
         return
@@ -187,7 +188,7 @@ async def tf50(ctx, link):
 
 @bot.command(pass_context=True)
 async def coop100(ctx, link):
-    curator = re.sub('\d|\W|(TravelFeed)','',str(ctx.message.author),re.IGNORECASE|re.DOTALL)
+    curator = re.sub(r'\d|\W|(TravelFeed)','',str(ctx.message.author),re.IGNORECASE|re.DOTALL)
     if not ctx.message.channel.id == commandchannel:
         await loop.create_task(send_discord("Bot commands are only allowed in #bot-commands", ctx.message.channel.id))
         return
@@ -202,7 +203,7 @@ async def coop100(ctx, link):
 
 @bot.command(pass_context=True)
 async def ad10(ctx, link):
-    curator = re.sub('\d|\W|(TravelFeed)','',str(ctx.message.author),re.IGNORECASE|re.DOTALL)
+    curator = re.sub(r'\d|\W|(TravelFeed)','',str(ctx.message.author),re.IGNORECASE|re.DOTALL)
     if not ctx.message.channel.id == commandchannel:
         await loop.create_task(send_discord("Bot commands are only allowed in #bot-commands", ctx.message.channel.id))
         return
@@ -217,7 +218,7 @@ async def ad10(ctx, link):
 
 @bot.command(pass_context=True)
 async def short0(ctx, link):
-    curator = re.sub('\d|\W|(TravelFeed)','',str(ctx.message.author),re.IGNORECASE|re.DOTALL)
+    curator = re.sub(r'\d|\W|(TravelFeed)','',str(ctx.message.author),re.IGNORECASE|re.DOTALL)
     if not ctx.message.channel.id == commandchannel:
         await loop.create_task(send_discord("Bot commands are only allowed in #bot-commands", ctx.message.channel.id))
         return
@@ -232,7 +233,7 @@ async def short0(ctx, link):
 
 @bot.command(pass_context=True)
 async def lang0(ctx, link):
-    curator = re.sub('\d|\W|(TravelFeed)','',str(ctx.message.author),re.IGNORECASE|re.DOTALL)
+    curator = re.sub(r'\d|\W|(TravelFeed)','',str(ctx.message.author),re.IGNORECASE|re.DOTALL)
     if not ctx.message.channel.id == commandchannel:
         await loop.create_task(send_discord("Bot commands are only allowed in #bot-commands", ctx.message.channel.id))
         return
@@ -247,7 +248,7 @@ async def lang0(ctx, link):
  
 @bot.command(pass_context=True) 
 async def copyright0(ctx, link):
-    curator = re.sub('\d|\W|(TravelFeed)','',str(ctx.message.author),re.IGNORECASE|re.DOTALL)
+    curator = re.sub(r'\d|\W|(TravelFeed)','',str(ctx.message.author),re.IGNORECASE|re.DOTALL)
     if not ctx.message.channel.id == commandchannel:
         await loop.create_task(send_discord("Bot commands are only allowed in #bot-commands", ctx.message.channel.id))
         return
@@ -280,6 +281,17 @@ async def payouts(ctx, time):
     await loop.create_task(send_discord("*Manual queing initiated*", "reward"))
     await stream_rewards(time)
     await loop.create_task(send_discord("*Manual queing ended*", "reward"))
+
+@bot.command(pass_context=True)
+async def location(ctx, link):
+    author, permlink = resolve_authorperm(link)
+    post = Comment(construct_authorperm(author, permlink))
+    body = post['body']
+    location = get_location(body)
+    if location == None:
+        await bot.say("No location provided")
+    else:
+        await bot.say("The location is: **"+location+"**")
 
 """
 Queue functions
@@ -323,6 +335,53 @@ def get_history(user):
         return "**0** Resteems, **"+str(honours[user])+"** Honours"
     else:
         return "**0** Resteems, **0** Honours"
+
+def get_location(body):
+    """
+    If a steemitworldmap code is in the text, the location is extracted
+    """
+    m = re.search(r"\bsteemitworldmap\b\s([-+]?([1-8]?\d(\.\d+)?|90(\.0+)?))\s\blat\b\s([-+]?(180(\.0+)?|((1[0-7]\d)|([1-9]?\d))(\.\d+)?))", body)
+    if m:
+        try:
+            latitude = m.group(1)
+            longitude = m.group(5)
+            geolocator = Nominatim(user_agent="travelfeed/0.1")
+            rawlocation = geolocator.reverse(latitude+", "+longitude, language="en", timeout=10).raw
+            address = rawlocation['address']
+            state = address.get('state', None)
+            if state == None:
+                state = address.get('region', None)
+                if state == None:
+                    state = address.get('state_district', None)
+                    if state == None:
+                        state = address.get('county', None)
+                        if state == None:
+                            state = ""
+            country_code = str(rawlocation["address"]["country_code"]).upper()
+            country_object = pycountry.countries.get(alpha_2=country_code)
+            country = country_object.name
+            continent_code = pycountry_convert.country_alpha2_to_continent_code(country_code)
+            if continent_code == "AF":
+                continent = "Africa"
+            elif continent_code == "NA":
+                continent = "North America"
+            elif continent_code == "OC":
+                continent = "Oceania"
+            elif continent_code == "AN":
+                continent = "Antarctica"
+            elif continent_code == "AS":
+                continent = "Asia"
+            elif continent_code == "EU":
+                continent = "Europe"
+            elif continent_code == "SA":
+                continent = "South America"
+            location = state+", "+country+", "+continent
+            return location
+        except Exception as error:
+            logger.warning("Could not determine location: "+repr(error))
+            return None
+    else:
+        return None
 
 def is_eligible(text, n, lng):
     """
@@ -502,7 +561,7 @@ async def post_do_action(post, action, curator, reaction):
                     logger.warning("Could not send message to Discord")
         if not reaction == None:
             try:
-                await bot.remove_reaction(reaction, "⏳", bot.user) #todo
+                await bot.remove_reaction(reaction, "⏳", bot.user)
             except Exception as error:
                 logger.warning("Could not remove hourglass reaction"+repr(error))
         await asyncio.sleep(3)
@@ -524,7 +583,9 @@ async def stream_history():
     """
     acc = Account(trackaccount)
     stop = datetime.utcnow() - timedelta(days=7)
-    while True:        
+    while True:
+        global honours
+        global resteems
         honours = {}
         resteems = {}
         for vote in acc.history_reverse(stop=stop, only_ops=["vote"]):
@@ -557,8 +618,7 @@ async def stream_rewards(rewardtime): # Custom function for travelfeed, modify t
             authorperm = construct_authorperm(reward["author"], reward["permlink"])
             post = Comment(authorperm)
             if not "Weekly Round-Up" in post["title"]:
-                logger.info("Ignoring reward for other post: "+authorperm)
-                return
+                continue
             if reward['sbd_payout'] == '0.000 SBD':
                 sbdreward = None
             else:
@@ -583,11 +643,11 @@ async def stream_rewards(rewardtime): # Custom function for travelfeed, modify t
             mentionsdict = {x:mentions.count(x) for x in mentions}
             mentionsnr = len(mentions)
             if mentionsnr == 0:
-                return
+                continue
             elif mentionsnr > 3:
                 logging.warning("Could not get rewards for post "+authorperm+": Mentions more than three")
-                return
-            logger.info("Found author reward of "+str(steemreward)+" STEEM for post https://steemit.com/"+authorperm)
+                continue
+            logger.info("Found author reward for post https://steemit.com/"+authorperm)
             if steemreward == None:
                 await loop.create_task(send_discord("Found author reward of "+str(sbdreward)+" SBD for post https://steemit.com/"+authorperm+". Half of the liquid SBD rewards will be split between the featured authors "+str(mentions)+". Memo: `"+memo+"`", "reward"))
                 for postauthor in mentionsdict:
@@ -685,7 +745,7 @@ def stream_comments(sync_q):
                 commenttext = ""
                 if authorperm in post_urls:
                     logger.info("Ignoring updated post")
-                    break
+                    continue
                 elif author in blacklist: 
                     commenttext = blacklisttext
                     logger.info("Detected post by blacklisted user @{}".format(author))
@@ -703,7 +763,11 @@ def stream_comments(sync_q):
                         else:
                             logger.info("Sending awesome post by @{} to Discord feed".format(author))
                             history = get_history(author)
-                            msg = history+". "+str(count)+" words."
+                            location = get_location(body)
+                            if location == None:
+                                msg = history+". **"+str(count)+"** words. Location: **"+location+"**"
+                            else:
+                                msg = history+". **"+str(count)+"** words."
                             try:
                                 sync_q.put(Discord_Message(msg, "feed"))
                                 sync_q.put(Discord_Message("https://steemit.com/"+authorperm, "feed"))
@@ -711,7 +775,7 @@ def stream_comments(sync_q):
                                 logger.warning("Could not send message to Discord")
                     except Exception as error:
                         logger.warning("Error during content processing "+repr(error))
-                        break
+                        continue
                 if not commenttext == "":
                     try:
                         post.reply(commenttext.format(author, count), author=postaccount)
@@ -722,7 +786,7 @@ def stream_comments(sync_q):
                             sync_q.put(Discord_Message("Could not leave a comment for bad post https://steemit.com/"+authorperm, "log"))
                         except:
                             logger.warning("Could not send message to Discord")
-                        break
+                        continue
                 file.write("\n"+authorperm)
                 file.close()
                 file = open(postlogpath, 'a+')

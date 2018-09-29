@@ -26,6 +26,13 @@ adchannel = "489781127838433281"
 rewardchannel = "490396153146376194"
 logchannel = "489680525389332490"
 commandchannel = '490205632394297345'
+australiaoceaniaafrica = '495307186608537601'
+asia = '495307374597373982'
+foodoftheworld = '495307704374394901'
+europe = '495307415965794304'
+america = '495307447616143373'
+traveladvice = '495307928526389288'
+nocategory = '495307497977020426'
 # Curation account to track
 trackaccount = 'travelfeed'
 # Curated tag to search in
@@ -89,22 +96,8 @@ async def send_discord(msg, cnl):
     """
     Sends the message *msg* to the Discord channel *cnl*
     """
-    if cnl == "upvote":
-        channelid = upvotechannel
-    elif cnl == "honour":
-        channelid = honourchannel
-    elif cnl == "feed":
-        channelid = feedchannel
-    elif cnl == "ad":
-        channelid = adchannel
-    elif cnl == "reward":
-        channelid = rewardchannel
-    elif cnl == "log":
-        channelid = logchannel
-    else:
-        channelid = cnl
     await bot.wait_until_ready()
-    await bot.send_message(bot.get_channel(channelid), msg)
+    await bot.send_message(bot.get_channel(cnl), msg)
 
 bot = commands.Bot(command_prefix="!")
 
@@ -125,7 +118,7 @@ async def on_reaction_add(reaction, user):
         curator = re.sub(r'\d|\W|(TravelFeed)','',str(user),re.IGNORECASE|re.DOTALL)
         if not user.id in discordcuratorlist and not user.id == botid:
             """Checks if user who added reaction is a curator"""
-            await loop.create_task(send_discord("Curator unauthorised: "+curator, "log"))
+            await loop.create_task(send_discord("Curator unauthorised: "+curator, logchannel))
             return
         else:
             author, permlink = resolve_authorperm(reaction.message.content)
@@ -164,7 +157,7 @@ async def tf100(ctx, link):
         return
     if not ctx.message.author.id in discordcuratorlist:
         """Checks if user who used the command is a curator"""
-        await loop.create_task(send_discord("Curator unauthorised: "+curator, "log"))
+        await loop.create_task(send_discord("Curator unauthorised: "+curator, logchannel))
         return
     await bot.add_reaction(ctx.message, "⏳")
     author, permlink = resolve_authorperm(link)
@@ -179,7 +172,7 @@ async def tf50(ctx, link):
         await loop.create_task(send_discord("Bot commands are only allowed in #bot-commands", ctx.message.channel.id))
         return
     if not ctx.message.author.id in discordcuratorlist:
-        await loop.create_task(send_discord("Curator unauthorised: "+curator, "log"))
+        await loop.create_task(send_discord("Curator unauthorised: "+curator, logchannel))
         return
     await bot.add_reaction(ctx.message, "⏳")
     author, permlink = resolve_authorperm(link)
@@ -193,7 +186,7 @@ async def coop100(ctx, link):
         await loop.create_task(send_discord("Bot commands are only allowed in #bot-commands", ctx.message.channel.id))
         return
     if not ctx.message.author.id in discordcuratorlist:
-        await loop.create_task(send_discord("Curator unauthorised: "+curator, "log"))
+        await loop.create_task(send_discord("Curator unauthorised: "+curator, logchannel))
         return
     await bot.add_reaction(ctx.message, "⏳")
     author, permlink = resolve_authorperm(link)
@@ -208,7 +201,7 @@ async def ad10(ctx, link):
         await loop.create_task(send_discord("Bot commands are only allowed in #bot-commands", ctx.message.channel.id))
         return
     if not ctx.message.author.id in discordcuratorlist:
-        await loop.create_task(send_discord("Curator unauthorised: "+curator, "log"))
+        await loop.create_task(send_discord("Curator unauthorised: "+curator, logchannel))
         return
     await bot.add_reaction(ctx.message, "⏳")
     author, permlink = resolve_authorperm(link)
@@ -223,7 +216,7 @@ async def short0(ctx, link):
         await loop.create_task(send_discord("Bot commands are only allowed in #bot-commands", ctx.message.channel.id))
         return
     if not ctx.message.author.id in discordcuratorlist:
-        await loop.create_task(send_discord("Curator unauthorised: "+curator, "log"))
+        await loop.create_task(send_discord("Curator unauthorised: "+curator, logchannel))
         return
     await bot.add_reaction(ctx.message, "⏳")
     author, permlink = resolve_authorperm(link)
@@ -238,7 +231,7 @@ async def lang0(ctx, link):
         await loop.create_task(send_discord("Bot commands are only allowed in #bot-commands", ctx.message.channel.id))
         return
     if not ctx.message.author.id in discordcuratorlist:
-        await loop.create_task(send_discord("Curator unauthorised: "+curator, "log"))
+        await loop.create_task(send_discord("Curator unauthorised: "+curator, logchannel))
         return
     await bot.add_reaction(ctx.message, "⏳")
     author, permlink = resolve_authorperm(link)
@@ -253,7 +246,7 @@ async def copyright0(ctx, link):
         await loop.create_task(send_discord("Bot commands are only allowed in #bot-commands", ctx.message.channel.id))
         return
     if not ctx.message.author.id in discordcuratorlist:
-        await loop.create_task(send_discord("Curator unauthorised: "+curator, "log"))
+        await loop.create_task(send_discord("Curator unauthorised: "+curator, logchannel))
         return
     await bot.add_reaction(ctx.message, "⏳")
     author, permlink = resolve_authorperm(link)
@@ -278,16 +271,16 @@ async def mana():
 @bot.command(pass_context=True)
 async def payouts(ctx, time):
     await bot.say("Fetching rewards history for the past **"+time+"** days to #rewards_log")
-    await loop.create_task(send_discord("*Manual queing initiated*", "reward"))
+    await loop.create_task(send_discord("*Manual queing initiated*", rewardchannel))
     await stream_rewards(time)
-    await loop.create_task(send_discord("*Manual queing ended*", "reward"))
+    await loop.create_task(send_discord("*Manual queing ended*", rewardchannel))
 
 @bot.command(pass_context=True)
 async def location(ctx, link):
     author, permlink = resolve_authorperm(link)
     post = Comment(construct_authorperm(author, permlink))
     body = post['body']
-    location = get_location(body)
+    location = get_location(body, None)
     if location == None:
         await bot.say("No location provided")
     else:
@@ -336,7 +329,7 @@ def get_history(user):
     else:
         return "**0** Resteems, **0** Honours"
 
-def get_location(body):
+def get_location(body, returnthis):
     """
     If a steemitworldmap code is in the text, the location is extracted
     """
@@ -357,9 +350,12 @@ def get_location(body):
                         state = address.get('county', None)
                         if state == None:
                             state = ""
-            country_code = str(rawlocation["address"]["country_code"]).upper()
+            country_code = str(address["country_code"]).upper()
             country_object = pycountry.countries.get(alpha_2=country_code)
-            country = country_object.name
+            try:
+                country = country_object.common_name
+            except:
+                country = country_object.name
             continent_code = pycountry_convert.country_alpha2_to_continent_code(country_code)
             if continent_code == "AF":
                 continent = "Africa"
@@ -375,8 +371,11 @@ def get_location(body):
                 continent = "Europe"
             elif continent_code == "SA":
                 continent = "South America"
-            location = state+", "+country+", "+continent
-            return location
+            if returnthis == None:
+                location = state+", "+country+", "+continent
+                return location
+            if returnthis == "continentcode":
+                return continent_code
         except Exception as error:
             logger.warning("Could not determine location: "+repr(error))
             return None
@@ -408,18 +407,33 @@ async def post_do_action(post, action, curator, reaction):
         authorperm = construct_authorperm(post["author"], post["permlink"])
         link = "https://steemit.com/"+authorperm
         if post["author"] in blacklist:
-            await loop.create_task(send_discord("WARNING: Author is blacklisted "+link, "log"))
+            await loop.create_task(send_discord("WARNING: Author is blacklisted "+link, logchannel))
             return
         elif action == "tf100":
             try:
                 post.upvote(weight=100, voter=postaccount)
-                await loop.create_task(send_discord(link, "upvote"))
+                await loop.create_task(send_discord(link, upvotechannel))
+                continent_code = get_location(authorperm, "continentcode")
+                if continent_code == "AF" or continent_code == "OC" or continent_code == "AN":
+                    await loop.create_task(send_discord(link, australiaoceaniaafrica))
+                elif continent_code == "AS":
+                    await loop.create_task(send_discord(link, asia))
+                elif continent_code == "EU":
+                    await loop.create_task(send_discord(link, europe))
+                elif continent_code == "SA" or continent_code == "NA":
+                    await loop.create_task(send_discord(link, america))
+                elif "food" in post['body'] or "eat" in post['body'] or "restaurant" in post['body']:
+                    await loop.create_task(send_discord(link, foodoftheworld))
+                elif "advice" in post['body'] or "budget" in post['body'] or "learn" in post['body']:
+                    await loop.create_task(send_discord(link, traveladvice))
+                else:
+                    await loop.create_task(send_discord(link, nocategory))
                 if not reaction == None:
                     await bot.add_reaction(reaction, "🆙")
             except Exception as error:
                 logger.warning("Could not vote with 100%"+repr(error))
                 try:
-                    await loop.create_task(send_discord("Could not vote with 100% on "+link+" Exception: "+repr(error), "log"))
+                    await loop.create_task(send_discord("Could not vote with 100% on "+link+" Exception: "+repr(error), logchannel))
                     if not reaction == None:
                         await bot.add_reaction(reaction, "🆘")
                 except:
@@ -433,7 +447,7 @@ async def post_do_action(post, action, curator, reaction):
             except Exception as error:
                 logger.warning("Could not resteem post "+repr(error))
                 try:
-                    await loop.create_task(send_discord("Could not resteem "+link+" Exception: "+repr(error), "log"))
+                    await loop.create_task(send_discord("Could not resteem "+link+" Exception: "+repr(error), logchannel))
                     if not reaction == None:
                         await bot.add_reaction(reaction, "🆘")
                 except:
@@ -446,7 +460,7 @@ async def post_do_action(post, action, curator, reaction):
             except Exception as error:
                 logger.warning("Could not comment on resteem post "+repr(error))
                 try:
-                    await loop.create_task(send_discord("Could not comment on resteem post "+link+" Exception: "+repr(error), "log"))
+                    await loop.create_task(send_discord("Could not comment on resteem post "+link+" Exception: "+repr(error), logchannel))
                     if not reaction == None:
                         await bot.add_reaction(reaction, "🆘")
                 except:
@@ -456,11 +470,11 @@ async def post_do_action(post, action, curator, reaction):
                 post.upvote(weight=50, voter=postaccount)
                 if not reaction == None:
                     await bot.add_reaction(reaction, "🆗")
-                await loop.create_task(send_discord(link, "honour"))
+                await loop.create_task(send_discord(link, honourchannel))
             except Exception as error:
                 logger.warning("Could not vote with 50%"+repr(error))
                 try:
-                    await loop.create_task(send_discord("Could not vote with 50% on "+link+" Exception: "+repr(error), "log"))
+                    await loop.create_task(send_discord("Could not vote with 50% on "+link+" Exception: "+repr(error), logchannel))
                     if not reaction == None:
                         await bot.add_reaction(reaction, "🆘")
                 except:
@@ -474,7 +488,7 @@ async def post_do_action(post, action, curator, reaction):
             except Exception as error:
                 logger.warning("Could not comment on honour post "+repr(error))
                 try:
-                    await loop.create_task(send_discord("Could not comment on honour post "+link+" Exception: "+repr(error), "log"))
+                    await loop.create_task(send_discord("Could not comment on honour post "+link+" Exception: "+repr(error), logchannel))
                     if not reaction == None:
                         await bot.add_reaction(reaction, "🆘")
                 except:
@@ -487,7 +501,7 @@ async def post_do_action(post, action, curator, reaction):
             except Exception as error:
                 logger.warning("Could not vote with 100% on cooperation post "+repr(error))
                 try:
-                    await loop.create_task(send_discord("Could not vote with 100% on cooperation post "+link+" Exception: "+repr(error), "log"))
+                    await loop.create_task(send_discord("Could not vote with 100% on cooperation post "+link+" Exception: "+repr(error), logchannel))
                     if not reaction == None:
                         await bot.add_reaction(reaction, "🆘")
                 except:
@@ -501,7 +515,7 @@ async def post_do_action(post, action, curator, reaction):
             except Exception as error:
                 logger.warning("Could not vote on ad post "+repr(error))
                 try:
-                    await loop.create_task(send_discord("Could not vote with 10% on ad post "+link+" Exception: "+repr(error), "log"))
+                    await loop.create_task(send_discord("Could not vote with 10% on ad post "+link+" Exception: "+repr(error), logchannel))
                     if not reaction == None:
                         await bot.add_reaction(reaction, "🆘")
                 except:
@@ -515,7 +529,7 @@ async def post_do_action(post, action, curator, reaction):
             except Exception as error:
                 logger.warning("Could not comment on ad post "+repr(error))
                 try:
-                    await loop.create_task(send_discord("Could not comment on ad post "+link+" Exception: "+repr(error), "log"))
+                    await loop.create_task(send_discord("Could not comment on ad post "+link+" Exception: "+repr(error), logchannel))
                     if not reaction == None:
                         await bot.add_reaction(reaction, "🆘")
                 except:
@@ -528,7 +542,7 @@ async def post_do_action(post, action, curator, reaction):
             except Exception as error:
                 logger.warning("Could not comment on short post "+repr(error))
                 try:
-                    await loop.create_task(send_discord("Could not comment on short post "+link+" Exception: "+repr(error), "log"))
+                    await loop.create_task(send_discord("Could not comment on short post "+link+" Exception: "+repr(error), logchannel))
                     if not reaction == None:
                         await bot.add_reaction(reaction, "🆘")
                 except:
@@ -541,7 +555,7 @@ async def post_do_action(post, action, curator, reaction):
             except Exception as error:
                 logger.warning("Could not comment on non-English post "+repr(error))
                 try:
-                    await loop.create_task(send_discord("Could not comment on non-English post "+link+" Exception: "+repr(error), "log"))
+                    await loop.create_task(send_discord("Could not comment on non-English post "+link+" Exception: "+repr(error), logchannel))
                     if not reaction == None:
                         await bot.add_reaction(reaction, "🆘")
                 except:
@@ -554,7 +568,7 @@ async def post_do_action(post, action, curator, reaction):
             except Exception as error:
                 logger.warning("Could not comment on copyright post "+repr(error))
                 try:
-                    await loop.create_task(send_discord("Could not comment on copyright post "+link+" Exception: "+repr(error), "log"))
+                    await loop.create_task(send_discord("Could not comment on copyright post "+link+" Exception: "+repr(error), logchannel))
                     if not reaction == None:
                         await bot.add_reaction(reaction, "🆘")
                 except:
@@ -568,7 +582,7 @@ async def post_do_action(post, action, curator, reaction):
     except Exception as error:
         logger.warning("Could not execute action for post "+str(post)+repr(error))
         try:
-            await loop.create_task(send_discord("Could not execute action on post "+str(post)+" Exception:"+repr(error), "log"))
+            await loop.create_task(send_discord("Could not execute action on post "+str(post)+" Exception:"+repr(error), logchannel))
             if not reaction == None:
                 await bot.add_reaction(reaction, "🆘")
         except:
@@ -649,22 +663,22 @@ async def stream_rewards(rewardtime): # Custom function for travelfeed, modify t
                 continue
             logger.info("Found author reward for post https://steemit.com/"+authorperm)
             if steemreward == None:
-                await loop.create_task(send_discord("Found author reward of "+str(sbdreward)+" SBD for post https://steemit.com/"+authorperm+". Half of the liquid SBD rewards will be split between the featured authors "+str(mentions)+". Memo: `"+memo+"`", "reward"))
+                await loop.create_task(send_discord("Found author reward of "+str(sbdreward)+" SBD for post https://steemit.com/"+authorperm+". Half of the liquid SBD rewards will be split between the featured authors "+str(mentions)+". Memo: `"+memo+"`", rewardchannel))
                 for postauthor in mentionsdict:
                     payout = round((mentionsdict[postauthor]/(mentionsnr*2)*sbdreward), 3)
-                    await loop.create_task(send_discord("Please send the reward of **"+str(payout)+" SBD** to **"+postauthor+"**", "reward"))
+                    await loop.create_task(send_discord("Please send the reward of **"+str(payout)+" SBD** to **"+postauthor+"**", rewardchannel))
             elif sbdreward == None:
-                await loop.create_task(send_discord("Found author reward of "+str(steemreward)+" STEEM for post https://steemit.com/"+authorperm+". Half of the liquid STEEM rewards will be split between the featured authors "+str(mentions)+". Memo: `"+memo+"`", "reward"))
+                await loop.create_task(send_discord("Found author reward of "+str(steemreward)+" STEEM for post https://steemit.com/"+authorperm+". Half of the liquid STEEM rewards will be split between the featured authors "+str(mentions)+". Memo: `"+memo+"`", rewardchannel))
                 for postauthor in mentionsdict:
                     payout = round((mentionsdict[postauthor]/(mentionsnr*2)*steemreward), 3)
-                    await loop.create_task(send_discord("Please send the reward of **"+str(payout)+" Steem** to **"+postauthor+"**", "reward"))
+                    await loop.create_task(send_discord("Please send the reward of **"+str(payout)+" Steem** to **"+postauthor+"**", rewardchannel))
             else:
-                await loop.create_task(send_discord("Found author reward of "+str(steemreward)+" STEEM and "+str(sbdreward)+" SBD for post https://steemit.com/"+authorperm+". Half of the liquid rewards will be split between the featured authors "+str(mentions)+". Memo: `"+memo+"`", "reward"))
+                await loop.create_task(send_discord("Found author reward of "+str(steemreward)+" STEEM and "+str(sbdreward)+" SBD for post https://steemit.com/"+authorperm+". Half of the liquid rewards will be split between the featured authors "+str(mentions)+". Memo: `"+memo+"`", rewardchannel))
                 for postauthor in mentionsdict:
                     steempayout = round((mentionsdict[postauthor]/(mentionsnr*2)*steemreward), 3)
                     sbdpayout = round((mentionsdict[postauthor]/(mentionsnr*2)*sbdreward), 3)
-                    await loop.create_task(send_discord("Please send the reward of **"+str(steempayout)+" Steem** and **"+str(sbdpayout)+" SBD** to **"+postauthor+"**", "reward"))
-            await loop.create_task(send_discord(":boom: :boom: :boom: :boom: :boom: :boom:", "reward"))
+                    await loop.create_task(send_discord("Please send the reward of **"+str(steempayout)+" Steem** and **"+str(sbdpayout)+" SBD** to **"+postauthor+"**", rewardchannel))
+            await loop.create_task(send_discord(":boom: :boom: :boom: :boom: :boom: :boom:", rewardchannel))
         logger.info("Got rewards from Blockchain")
         if rewardtime == None:
             await asyncio.sleep(60*60*6) #sleep for 6 hours
@@ -727,8 +741,8 @@ def stream_comments(sync_q):
                         logger.info("@{} requests manual review ".format(author))
                         history = get_history(author)
                         try:
-                            sync_q.put(Discord_Message("Author requests manual review: "+history, "feed"))
-                            sync_q.put(Discord_Message("https://steemit.com/"+parentlink, "feed"))
+                            sync_q.put(Discord_Message("Author requests manual review: "+history, feedchannel))
+                            sync_q.put(Discord_Message("https://steemit.com/"+parentlink, feedchannel))
                         except:
                             logger.warning("Could not send message to Discord")
                         try:
@@ -763,14 +777,14 @@ def stream_comments(sync_q):
                         else:
                             logger.info("Sending awesome post by @{} to Discord feed".format(author))
                             history = get_history(author)
-                            location = get_location(body)
+                            location = get_location(body, None)
                             if location == None:
                                 msg = history+". **"+str(count)+"** words. Location: **"+location+"**"
                             else:
                                 msg = history+". **"+str(count)+"** words."
                             try:
-                                sync_q.put(Discord_Message(msg, "feed"))
-                                sync_q.put(Discord_Message("https://steemit.com/"+authorperm, "feed"))
+                                sync_q.put(Discord_Message(msg, feedchannel))
+                                sync_q.put(Discord_Message("https://steemit.com/"+authorperm, feedchannel))
                             except:
                                 logger.warning("Could not send message to Discord")
                     except Exception as error:
@@ -783,7 +797,7 @@ def stream_comments(sync_q):
                     except:
                         logger.warning("There was an error posting the comment.")
                         try:
-                            sync_q.put(Discord_Message("Could not leave a comment for bad post https://steemit.com/"+authorperm, "log"))
+                            sync_q.put(Discord_Message("Could not leave a comment for bad post https://steemit.com/"+authorperm, logchannel))
                         except:
                             logger.warning("Could not send message to Discord")
                         continue
@@ -803,7 +817,7 @@ def stream_comments(sync_q):
                         logger.info("I detected a post by @{} eligable for an advertisement comment".format(author))
                         try:
                             adfile.write("\n"+author)
-                            sync_q.put(Discord_Message("https://steemit.com/"+authorperm, "ad"))
+                            sync_q.put(Discord_Message("https://steemit.com/"+authorperm, adchannel))
                             logger.info("Found an advertisement post by @{}".format(author))
                         except:
                             logger.warning("Could not promote advertisement post by @{}".format(author))

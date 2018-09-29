@@ -73,8 +73,11 @@ Additionally to here, you can find all possible bot reactions as a pinned messag
 The bot can also answer to a range of commands unrelated to executing curation routines:
 
 `!rewards username` Shows how many upvotes the user *username* received from @TravelFeed within the past 7 days
+
 `!payouts x` Fetch payout history for the past *x* days
+
 `!mana` Get the current voting mana of @TravelFeed
+
 `!location postlink` Shows the location of *postlink* if a steemitworldmap code snipped is provided in the post
 
 ## 6. Automated post categories (experimental)

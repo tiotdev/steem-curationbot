@@ -1,19 +1,18 @@
+import os, re, discord, asyncio, logging, janus, pycountry, pycountry_convert
+from datetime import datetime, timedelta
 from beem import Steem
 from beem.blockchain import Blockchain
 from beem.comment import Comment
 from beem.account import Account
 from beem.nodelist import NodeList
-from beem.instance import set_shared_steem_instance
 from beem.exceptions import ContentDoesNotExistsException
 from beem.utils import construct_authorperm, resolve_authorperm
 from bs4 import BeautifulSoup
 from markdown import markdown
 from langdetect import detect_langs
-from datetime import datetime, timedelta
 from discord.ext import commands
 from discord.ext.commands import Bot
 from geopy.geocoders import Nominatim
-import os, re, discord, asyncio, logging, json, requests, janus, pycountry, pycountry_convert
 
 """
 Configuration: Make adjustments here
@@ -37,7 +36,7 @@ nocategory = '495307497977020426'
 trackaccount = 'travelfeed'
 # Curated tag to search in
 tracktag = 'travelfeed'
-# Account to perform curation actions (can be different from tracked curation account)
+# Account to perform curation routines (can be different from tracked curation account)
 postaccount = 'travelfeed'
 # List of curators by Steem username
 curatorlist = ['for91days', 'rimicane', 'guchtere', 'mrprofessor', 'jpphotography']
@@ -45,34 +44,32 @@ curatorlist = ['for91days', 'rimicane', 'guchtere', 'mrprofessor', 'jpphotograph
 discordcuratorlist = ['386832984487231490', '385782450288328704', '347827940702289920', '433065572901584907', '264508921899646980']
 # ID of the Discord bot
 botid = "489608879223734292"
-# List of whitelisted users who are allowed to post short posts
+# List of whitelisted users whose posts are ignored
 whitelist = ['travelfeed', 'tangofever', 'steemitworldmap', 'de-travelfeed', 'cyclefeed']
 # Define path for logging
 logpath = 'bot.log'
-# Define path for logging processed posts
-postlogpath = 'posts.log'
 # Define path for start block
-blocklog = 'startblock'
+startblock = 'startblock.txt'
 # Tag to search in for ads
 adtag1 = 'travel'
 # Define path for logging authors advertised to
 autpath = 'author_list.log'
 # Comment for short posts 
-shortposttext = "Hi @{}, \n Thank you for participating in the #travelfeed curated tag. To maintain a level of quality on the project we have certain criteria that must be met for participation. Please review the following: https://steemit.com/travelfeed/@travelfeed/how-to-participate-use-travelfeed-in-your-posts \n **We require at least 250 words, but your post has only {} words.** \n Thank you very much for your interest and we hope to read some great travel articles from you soon! \n If you believe that you have received this comment by mistake or have updated your post, please reply to this comment with <code>!tfreview</code>. For further questions, please contact us on the [Steemit Travellers Discord](https://discord.gg/jWWu73H). \n Regards, @travelfeed"
+shortposttext = "Hi @{}, \n Thank you for participating in the #travelfeed curated tag. To maintain a level of quality on the project we have certain criteria that must be met for participation. Please review the following: https://steemit.com/travelfeed/@travelfeed/how-to-participate-use-travelfeed-in-your-posts \n **We require at least 250 words, but your post has only {} words.** \n Thank you very much for your interest and we hope to read some great travel articles from you soon! \n If you believe that you have received this comment by mistake or have updated your post to fit our criteria, please reply to this comment with <code>!tfreview</code>. For further questions, please contact us on the [Steemit Travellers Discord](https://discord.gg/jWWu73H). \n Regards, @travelfeed"
 # Comment for blacklisted users
 blacklisttext = "Hi @{}, \n Thank you for participating in the #travelfeed curated tag. To maintain a level of quality on the project we have certain criteria that must be met for participation. Please review the following: https://steemit.com/travelfeed/@travelfeed/how-to-participate-use-travelfeed-in-your-posts \n **You are currently blacklisted from the TravelFeed curation.** \n This is most likely because we have detected plagiarism in one of your posts in the past. If you believe that this is a mistake, please contact us on the [Steemit Travellers Discord](https://discord.gg/jWWu73H). \n Regards, @travelfeed"
 # Comment for other languages
-wronglangtext = "Hi @{}, \n Thank you for participating in the #travelfeed curated tag. To maintain a level of quality on the project we have certain criteria that must be met for participation. Please review the following: https://steemit.com/travelfeed/@travelfeed/how-to-participate-use-travelfeed-in-your-posts \n We require at least 250 words **in English**. \n Thank you very much for your interest and we hope to read some great travel articles from you soon! \n The language of your post was automatically detected, if your English text is at least 250 words long or you have updated your post, please reply to this comment with <code>!tfreview</code> for it to be considered for curation. For further questions, please contact us on the [Steemit Travellers Discord](https://discord.gg/jWWu73H). \n Regards, @travelfeed"
+wronglangtext = "Hi @{}, \n Thank you for participating in the #travelfeed curated tag. To maintain a level of quality on the project we have certain criteria that must be met for participation. Please review the following: https://steemit.com/travelfeed/@travelfeed/how-to-participate-use-travelfeed-in-your-posts \n We require at least 250 words **in English**. \n Thank you very much for your interest and we hope to read some great travel articles from you soon! \n The language of your post was automatically detected, if your English text is at least 250 words long or you have updated your post to fit our criteria, please reply to this comment with <code>!tfreview</code> for it to be considered for curation. For further questions, please contact us on the [Steemit Travellers Discord](https://discord.gg/jWWu73H). \n Regards, @travelfeed"
 # Honour text
-honourtext = "Congratulations! Your high quality-travel content was selected by @travelfeed curator @{} and earned you a **partial** upvote. We love your hard work and hope to encourage you to continue to publish strong travel-related content. <br> Thank you for participating in #travelfeed! <center> [![TravelFeed](https://ipfs.busy.org/ipfs/QmZhLuw8WE6JMCYHD3EXn3MBa2CSCcygvfFqfXde5z3TLZ)](https://steemit.com/travelfeed/@travelfeed/introducing-travelfeed-featuring-steemit-s-best-travel-content) <br> **Learn more about our travel project on Steemit by clicking on the banner above and join our community on [Discord](https://discord.gg/jWWu73H)**.</center>"
+honourtext = "Congratulations! Your high-quality travel content was selected by @travelfeed curator @{} and earned you a **partial** upvote. We love your hard work and hope to encourage you to continue to publish strong travel-related content. <br> Thank you for participating in #travelfeed! <center> [![TravelFeed](https://ipfs.busy.org/ipfs/QmZhLuw8WE6JMCYHD3EXn3MBa2CSCcygvfFqfXde5z3TLZ)](https://steemit.com/travelfeed/@travelfeed/introducing-travelfeed-featuring-steemit-s-best-travel-content) <br> **Learn more about our travel project on Steemit by clicking on the banner above and join our community on [Discord](https://discord.gg/jWWu73H)**.</center>"
 # Resteem Text
-resteemtext = "Congratulations! Your high quality-travel content was selected by @travelfeed curator @{} and earned you a reward, in form of a **100% upvote** and a **resteem**. Your work really stands out. Your article now has a chance to get curated and featured under the appropriate daily topic of our Travelfeed blog. Thank you for participating in #travelfeed! <br> <center>[![TravelFeed](https://ipfs.busy.org/ipfs/QmNTkoKQNzuQbQGbcZ1exTMjvxYUprdnVczxnvib9VUSqB)](https://steemit.com/travelfeed/@travelfeed/introducing-travelfeed-featuring-steemit-s-best-travel-content) <br> **Learn more about our travel project on Steemit by clicking on the banner above and join our community on [Discord](https://discord.gg/jWWu73H)**</center>"
+resteemtext = "Congratulations! Your high-quality travel content was selected by @travelfeed curator @{} and earned you a reward, in form of a **100% upvote** and a **resteem**. Your work really stands out. Your article now has a chance to get curated and featured under the appropriate daily topic of our Travelfeed blog. Thank you for participating in #travelfeed! <br> <center>[![TravelFeed](https://ipfs.busy.org/ipfs/QmNTkoKQNzuQbQGbcZ1exTMjvxYUprdnVczxnvib9VUSqB)](https://steemit.com/travelfeed/@travelfeed/introducing-travelfeed-featuring-steemit-s-best-travel-content) <br> **Learn more about our travel project on Steemit by clicking on the banner above and join our community on [Discord](https://discord.gg/jWWu73H)**</center>"
 # Advote Text
-advotetext = "Great read! Your high quality-travel content was selected by @travelfeed curator @{}. We just gave you a small upvote together with over 60 followers of the @travelfeed curation trail. <br> Have you heard of @travelfeed? Using the #travelfeed tag rewards authors and content creators who produce exceptional travel related articles, so be sure use our tag to get much bigger upvotes, resteems and be featured in our curation posts! <br> <center>[![TravelFeed](https://ipfs.busy.org/ipfs/QmNTkoKQNzuQbQGbcZ1exTMjvxYUprdnVczxnvib9VUSqB)](https://steemit.com/travelfeed/@travelfeed/introducing-travelfeed-featuring-steemit-s-best-travel-content) <br> **Learn more about our travel project on Steemit by clicking on the banner above and join our community on [Discord](https://discord.gg/jWWu73H)**</center>"
+advotetext = "Great read! Your high-quality travel content was selected by @travelfeed curator @{}. We just gave you a small upvote together with over 60 followers of the @travelfeed curation trail. <br> Have you heard of @travelfeed? Using the #travelfeed tag rewards authors and content creators who produce exceptional travel related articles, so be sure use our tag to get much bigger upvotes, resteems and be featured in our curation posts! <br> <center>[![TravelFeed](https://ipfs.busy.org/ipfs/QmNTkoKQNzuQbQGbcZ1exTMjvxYUprdnVczxnvib9VUSqB)](https://steemit.com/travelfeed/@travelfeed/introducing-travelfeed-featuring-steemit-s-best-travel-content) <br> **Learn more about our travel project on Steemit by clicking on the banner above and join our community on [Discord](https://discord.gg/jWWu73H)**</center>"
 # Manual comment text for short posts
-manualshorttext = "Hi @{}, \n Thank you for participating in the #travelfeed curated tag. To maintain a level of quality on the project we have certain criteria that must be met for participation. Please review the following: https://steemit.com/travelfeed/@travelfeed/how-to-participate-use-travelfeed-in-your-posts \n **We require at least 250 words.** \n Thank you very much for your interest and we hope to read some great travel articles from you soon! \n If you believe that you have received this comment by mistake or have updated your post, please reply to this comment with <code>!tfreview</code>. For further questions, please contact us on the [Steemit Travellers Discord](https://discord.gg/jWWu73H). \n Regards, @travelfeed"
+manualshorttext = "Hi @{}, \n Thank you for participating in the #travelfeed curated tag. To maintain a level of quality on the project we have certain criteria that must be met for participation. Please review the following: https://steemit.com/travelfeed/@travelfeed/how-to-participate-use-travelfeed-in-your-posts \n **We require at least 250 words.** \n Thank you very much for your interest and we hope to read some great travel articles from you soon! \n If you believe that you have received this comment by mistake or have updated your post to fit our criteria, please reply to this comment with <code>!tfreview</code>. For further questions, please contact us on the [Steemit Travellers Discord](https://discord.gg/jWWu73H). \n Regards, @travelfeed"
 # Manual comment text for posts that are not in English
-manuallangtext = "Hi @{}, \n Thank you for participating in the #travelfeed curated tag. To maintain a level of quality on the project we have certain criteria that must be met for participation. Please review the following: https://steemit.com/travelfeed/@travelfeed/how-to-participate-use-travelfeed-in-your-posts \n We require at least 250 words **in English**. \n Thank you very much for your interest and we hope to read some great travel articles from you soon! \n If you believe that you have received this comment by mistake or have updated your post, please reply to this comment with <code>!tfreview</code>. For further questions, please contact us on the [Steemit Travellers Discord](https://discord.gg/jWWu73H). \n Regards, @travelfeed"
+manuallangtext = "Hi @{}, \n Thank you for participating in the #travelfeed curated tag. To maintain a level of quality on the project we have certain criteria that must be met for participation. Please review the following: https://steemit.com/travelfeed/@travelfeed/how-to-participate-use-travelfeed-in-your-posts \n We require at least 250 words **in English**. \n Thank you very much for your interest and we hope to read some great travel articles from you soon! \n If you believe that you have received this comment by mistake or have updated your post to fit our criteria, please reply to this comment with <code>!tfreview</code>. For further questions, please contact us on the [Steemit Travellers Discord](https://discord.gg/jWWu73H). \n Regards, @travelfeed"
 # Copyright text
 copyrighttext = "Hi @{}, \n Thank you for participating in the #travelfeed curated tag. To maintain a level of quality on the project we have certain criteria that must be met for participation. Please review the following: https://steemit.com/travelfeed/@travelfeed/how-to-participate-use-travelfeed-in-your-posts \n We require **proper sourcing** for all media and text that is not your own. \n If you have updated your post with sources, please reply to this comment with <code>!tfreview</code>. For further questions, please contact us on the [Steemit Travellers Discord](https://discord.gg/jWWu73H). \n Thank you very much for your interest and we hope to read some great travel articles from you soon! \n Regards, @travelfeed"
 
@@ -81,7 +78,7 @@ resteems = {}
 walletpw =  os.environ.get('UNLOCK') #Beem wallet passphrase must be set as environment variable
 TOKEN = os.environ.get('TOKEN') #Discord secret token must be set as environment variable
 logger = logging.getLogger(__name__)
-logging.basicConfig(filename=logpath, format='%(asctime)s %(levelname)s: %(message)s', level=logging.INFO) #Log to file: filename=logpath
+logging.basicConfig(filename=logpath, format='%(asctime)s %(levelname)s: %(message)s', level=logging.INFO)
 node_list = NodeList().get_nodes()
 steem = Steem(node=node_list)
 steem.set_default_nodes(node_list)
@@ -93,9 +90,7 @@ blacklist = Account(trackaccount).get_mutings(raw_name_list=True)
 Discord functions
 """
 async def send_discord(msg, cnl):
-    """
-    Sends the message *msg* to the Discord channel *cnl*
-    """
+    """Sends the message *msg* to the Discord channel *cnl*"""
     await bot.wait_until_ready()
     await bot.send_message(bot.get_channel(cnl), msg)
 
@@ -103,6 +98,7 @@ bot = commands.Bot(command_prefix="!")
 
 @bot.event
 async def on_ready():
+    """Changes discord presence to "Playing TravelFeed.io" when the bot comes online"""
     try:
         await bot.change_presence(game=discord.Game(name='TravelFeed.io'))
     except:
@@ -111,9 +107,7 @@ async def on_ready():
 
 @bot.event
 async def on_reaction_add(reaction, user):
-    """
-    Initiate curation process by adding a reaction
-    """
+    """Initiate curation process by adding a reaction"""
     if reaction.message.content.startswith('http'):
         curator = re.sub(r'\d|\W|(TravelFeed)','',str(user),re.IGNORECASE|re.DOTALL)
         if not user.id in discordcuratorlist and not user.id == botid:
@@ -145,9 +139,7 @@ async def on_reaction_add(reaction, user):
                 await bot.add_reaction(reaction.message, "⏳")
                 actionqueue.put(Post_Action(post, "copyright0", None, reaction.message))
 
-"""
-Initiate curation process by using Discord commands
-"""
+"""Initiate curation process by using Discord commands"""
 @bot.command(pass_context=True)
 async def tf100(ctx, link):
     curator = re.sub(r'\d|\W|(TravelFeed)','',str(ctx.message.author),re.IGNORECASE|re.DOTALL)
@@ -259,17 +251,20 @@ Custom Discord commands that return info fetched from the Blockchain
 """
 @bot.command(pass_context=True)
 async def rewards(ctx, username):
+    """Get number of upvotes by @travelfeed for an account *username* within the past 7 days"""
     history = get_history(username)
     await bot.say(history+" in the past 7 days")
 
 @bot.command(pass_context=True)
 async def mana():
+    """Get current voting mana of @travelfeed"""
     acc = Account("travelfeed")
     mana = acc.get_manabar()
-    await bot.say("The voting mana of @travelfeed is **"+str(round(mana['estimated_pct'], 2))+"**")
+    await bot.say("The voting mana of @travelfeed is **"+str(round(mana['current_mana_pct'], 2))+"**")
 
 @bot.command(pass_context=True)
 async def payouts(ctx, time):
+    """Get author rewards to be paid out to featured authors for the past *time* days"""
     await bot.say("Fetching rewards history for the past **"+time+"** days to #rewards_log")
     await loop.create_task(send_discord("*Manual queing initiated*", rewardchannel))
     await stream_rewards(time)
@@ -277,6 +272,7 @@ async def payouts(ctx, time):
 
 @bot.command(pass_context=True)
 async def location(ctx, link):
+    """Get the location of a post *link*"""
     author, permlink = resolve_authorperm(link)
     post = Comment(construct_authorperm(author, permlink))
     body = post['body']
@@ -290,6 +286,7 @@ async def location(ctx, link):
 Queue functions
 """
 class Discord_Message:
+    """Class to send a Discord message"""
     def __init__(self, message, channel):
         self.message = message
         self.channel = channel
@@ -297,6 +294,7 @@ class Discord_Message:
         await loop.create_task(send_discord(self.message, self.channel))
 
 class Post_Action:
+    """Class to initiate a curation routine for a post"""
     def __init__(self, post, action, curator, reaction):
         self.post = post
         self.action = action
@@ -306,6 +304,7 @@ class Post_Action:
         await loop.create_task(post_do_action(self.post, self.action, self.curator, self.reaction))
 
 async def queue_worker(async_q):
+    """Worker function to process queue"""
     while True:
         if async_q.empty() == True:
             await asyncio.sleep(5)
@@ -317,9 +316,7 @@ async def queue_worker(async_q):
 Beem query functions
 """
 def get_history(user):
-    """
-    Returns the number of votes received the user received from the curation account in the past 7 days
-    """
+    """Returns the number of votes received the user received from the curation account in the past 7 days"""
     if user in resteems and user in honours:
         return "**"+str(resteems[user])+"** Resteems, **"+str(honours[user])+"** Honours"
     elif user in resteems:
@@ -330,9 +327,7 @@ def get_history(user):
         return "**0** Resteems, **0** Honours"
 
 def get_location(body, returnthis):
-    """
-    If a steemitworldmap code is in the text, the location is extracted
-    """
+    """If a steemitworldmap code is in the text, the location is extracted"""
     m = re.search(r"\bsteemitworldmap\b\s([-+]?([1-8]?\d(\.\d+)?|90(\.0+)?))\s\blat\b\s([-+]?(180(\.0+)?|((1[0-7]\d)|([1-9]?\d))(\.\d+)?))", body)
     if m:
         try:
@@ -342,7 +337,7 @@ def get_location(body, returnthis):
             rawlocation = geolocator.reverse(latitude+", "+longitude, language="en", timeout=10).raw
             address = rawlocation['address']
             state = address.get('state', None)
-            if state == None:
+            if state == None: #Not every location has a state/region/... set!
                 state = address.get('region', None)
                 if state == None:
                     state = address.get('state_district', None)
@@ -353,7 +348,7 @@ def get_location(body, returnthis):
             country_code = str(address["country_code"]).upper()
             country_object = pycountry.countries.get(alpha_2=country_code)
             try:
-                country = country_object.common_name
+                country = country_object.common_name #Some countries such as Taiwan or Bolivia have a common name that is used instead of the official name
             except:
                 country = country_object.name
             continent_code = pycountry_convert.country_alpha2_to_continent_code(country_code)
@@ -383,9 +378,7 @@ def get_location(body, returnthis):
         return None
 
 def is_eligible(text, n, lng):
-    """
-    Returns True if *text* contains at least *n* words in the specified *lng* language
-    """
+    """Returns True if *text* contains at least *n* words in the specified *lng* language"""
     for language in detect_langs(text):
         if language.lang == lng:
             probability = language.prob
@@ -400,9 +393,7 @@ def is_eligible(text, n, lng):
 Beem actions
 """
 async def post_do_action(post, action, curator, reaction):
-    """
-    Executes curation task *action* for post *post*
-    """
+    """Executes curation routine *action* for post *post*"""
     try:
         authorperm = construct_authorperm(post["author"], post["permlink"])
         link = "https://steemit.com/"+authorperm
@@ -592,9 +583,7 @@ async def post_do_action(post, action, curator, reaction):
 Beem background tasks
 """
 async def stream_history():
-    """
-    Background task: Gets votes received from trackaccount within the past 7 days every hour
-    """
+    """Background task: Gets votes received from travelfeed within the past 7 days every hour"""
     acc = Account(trackaccount)
     stop = datetime.utcnow() - timedelta(days=7)
     while True:
@@ -616,11 +605,9 @@ async def stream_history():
         logger.info("Got history from Blockchain")
         await asyncio.sleep(60*60) #sleep 1 hour
         
-async def stream_rewards(rewardtime): # Custom function for travelfeed, modify the code below if you are planning to use it
-    """
-    Background task: Scans blockchain for travelfeed author rewards, extracts mentions and determines which reward should be sent to mentioned users every six hours
-    Todo when code has been tested: Send out rewards automatically
-    """
+async def stream_rewards(rewardtime):
+    """Background task: Scans blockchain for travelfeed author rewards, extracts mentions and determines which reward should be sent to mentioned users every six hours"""
+    #Todo when code has been tested: Send out rewards automatically
     try:
         if rewardtime == None:
             rewardtime = 6
@@ -662,7 +649,7 @@ async def stream_rewards(rewardtime): # Custom function for travelfeed, modify t
                 logging.warning("Could not get rewards for post "+authorperm+": Mentions more than three")
                 continue
             logger.info("Found author reward for post https://steemit.com/"+authorperm)
-            if steemreward == None:
+            if steemreward == None: #Payouts in Steem, SBD or both are supported
                 await loop.create_task(send_discord("Found author reward of "+str(sbdreward)+" SBD for post https://steemit.com/"+authorperm+". Half of the liquid SBD rewards will be split between the featured authors "+str(mentions)+". Memo: `"+memo+"`", rewardchannel))
                 for postauthor in mentionsdict:
                     payout = round((mentionsdict[postauthor]/(mentionsnr*2)*sbdreward), 3)
@@ -688,11 +675,10 @@ async def stream_rewards(rewardtime): # Custom function for travelfeed, modify t
         logger.warning("Could not stream rewards: "+repr(error))
 
 def stream_comments(sync_q):
-    """
-    Main task: Runs the Blockchain stream
-    """
+    """Main task: Starts comment stream from the blockchain"""
+    processed_posts = []
     try:
-        blockfile = open(blocklog, 'r')
+        blockfile = open(startblock, 'r')
         starting_point = int(blockfile.read())
         blockfile.close()
     except:
@@ -707,9 +693,7 @@ def stream_comments(sync_q):
     except Exception as error:
         logger.warning("Could not start blockchain stream "+repr(error))
         stream_comments(starting_point)
-    """
-    Stream comment objects from Blockchain, react to relevant ones
-    """
+    """Continuously stream comment objects from Blockchain, react to relevant one"""
     for post in stream:
         try:
             post.refresh()
@@ -719,9 +703,7 @@ def stream_comments(sync_q):
             authorperm = construct_authorperm(author, post['permlink'])
             if post.is_comment():
                 if author in curatorlist:                
-                    """
-                    Initiates an action if a curator uses the invocation command in a comment
-                    """
+                    """Initiates an action if a curator uses the invocation command in a comment"""
                     parent = post.get_parent()
                     if "!tf50" in body:
                         sync_q.put(Post_Action(parent, "tf50", author, None))
@@ -732,9 +714,7 @@ def stream_comments(sync_q):
                     elif "!ad10" in body:
                         sync_q.put(Post_Action(parent, "ad10", author, None)) 
                 elif "!tfreview" in body:
-                    """
-                    Users targeted by bot comments can have their posts manually reviewed
-                    """
+                    """Users targeted by bot comments can have their posts manually reviewed"""
                     if post.parent_author == postaccount:
                         parent = post.get_parent()
                         parentlink = construct_authorperm(parent['author'], parent['permlink'])
@@ -750,14 +730,9 @@ def stream_comments(sync_q):
                         except:
                             logger.warning("Could not send reply to !tfreview reuester")
             elif post.is_main_post() and tracktag in tags and not author in whitelist:
-                """
-                Checks post in #travelfeed
-                """
-                file = open(postlogpath, 'a+')
-                file.seek(0)
-                post_urls = file.read().splitlines()
+                """Checks for each *post* in #travelfeed if it fits the criteria"""
                 commenttext = ""
-                if authorperm in post_urls:
+                if post.time_elapsed() > timedelta(minutes=2) or post in processed_posts: #If a post is edited within the first two minutes it would be processed twice without checking for the second condition. The array of processed posts does not need to be saved at exit since it is only relevant for two minutes
                     logger.info("Ignoring updated post")
                     continue
                 elif author in blacklist: 
@@ -776,12 +751,16 @@ def stream_comments(sync_q):
                             logger.info("Detected post by @{} who posted not in English".format(author))
                         else:
                             logger.info("Sending awesome post by @{} to Discord feed".format(author))
-                            history = get_history(author)
-                            location = get_location(body, None)
+                            try:
+                                history = get_history(author)
+                                location = get_location(body, None)
+                            except:
+                                history = ""
+                                location = None
                             if location == None:
-                                msg = history+". **"+str(count)+"** words. Location: **"+location+"**"
-                            else:
                                 msg = history+". **"+str(count)+"** words."
+                            else:
+                                msg = history+". **"+str(count)+"** words. Location: **"+location+"**"
                             try:
                                 sync_q.put(Discord_Message(msg, feedchannel))
                                 sync_q.put(Discord_Message("https://steemit.com/"+authorperm, feedchannel))
@@ -801,20 +780,15 @@ def stream_comments(sync_q):
                         except:
                             logger.warning("Could not send message to Discord")
                         continue
-                file.write("\n"+authorperm)
-                file.close()
-                file = open(postlogpath, 'a+')
+                processed_posts += [authorperm]
             elif post.is_main_post() and (adtag1 in tags) and not tracktag in tags:
-                """
-                Checks if post is in adtag and eligable for advertisement
-                """
+                """Checks if post is in adtag and eligable for advertisement"""
                 content = re.sub(r'\w+:\/{2}[\d\w-]+(\.[\d\w-]+)*(?:(?:\/[^\s/]*))*', '', ''.join(BeautifulSoup(markdown(body), "html.parser").findAll(text=True)))
                 if is_eligible(content, 400, "en"):
                     adfile = open(autpath, 'a+')
                     adfile.seek(0)
                     author_list = adfile.read().splitlines()
                     if not author in author_list:
-                        logger.info("I detected a post by @{} eligable for an advertisement comment".format(author))
                         try:
                             adfile.write("\n"+author)
                             sync_q.put(Discord_Message("https://steemit.com/"+authorperm, adchannel))
@@ -830,7 +804,7 @@ def stream_comments(sync_q):
 
 if __name__ == '__main__':
     """
-    Starting the bot. A custom starting block can be defined in the blocklog file.
+    Starting the bot. An optional custom starting block can be defined in the optional *startblock* file.
     """
     loop = asyncio.get_event_loop()
     queue = janus.Queue(loop=loop) #janus enables the synchronous beem library to work with the asynchronous Discord.py library

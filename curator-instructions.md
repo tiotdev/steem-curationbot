@@ -80,6 +80,8 @@ The bot can also answer to a range of commands unrelated to executing curation r
 
 `!location postlink` Shows the location of *postlink* if a steemitworldmap code snipped is provided in the post
 
+`!getposts theme` Search the last 100 posts in #travelfeed for posts fitting the curation theme. Valid arguments for the option *theme* include: "Africa", "Oceania", "Australia", "australiaoceaniaafrica", "Asia", "Food", "foodoftheworld", "Europe", "America", "travel Advice", "traveladvice". Expect "foodoftheworld" and "traveladvice" to contain false positives.
+
 ## 6. Automated post categories (experimental)
 
 Upvoted posts are automatically dropped in one of the post category channels ("Curated posts by category") based on location (steemitworldmap code snippet) or hotwords. You can search these channels to find posts for the curation post!

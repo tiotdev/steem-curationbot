@@ -5,6 +5,7 @@ from beem.blockchain import Blockchain
 from beem.comment import Comment
 from beem.account import Account
 from beem.nodelist import NodeList
+from beem.rc import RC
 from beem.discussions import Query, Discussions_by_created
 from beem.exceptions import ContentDoesNotExistsException
 from beem.utils import construct_authorperm, resolve_authorperm
@@ -33,12 +34,10 @@ europe = '495307415965794304'
 america = '495307447616143373'
 traveladvice = '495307928526389288'
 nocategory = '495307497977020426'
-# Curation account to track
-trackaccount = 'travelfeed'
+# Curation account to track and perform curation routines
+curationaccount = 'travelfeed'
 # Curated tag to search in
 tracktag = 'travelfeed'
-# Account to perform curation routines (can be different from tracked curation account)
-postaccount = 'travelfeed'
 # List of curators by Steem username
 curatorlist = ['for91days', 'rimicane', 'guchtere', 'mrprofessor', 'jpphotography']
 # List of curators by Discord ID
@@ -55,6 +54,8 @@ startblock = 'startblock.txt'
 adtag1 = 'travel'
 # Define path for logging authors advertised to
 autpath = 'author_list.log'
+# Define path for logging rewards sent
+rewardpath = 'rewards.log'
 # Comment for short posts 
 shortposttext = "Hi @{}, \n Thank you for participating in the #travelfeed curated tag. To maintain a level of quality on the project we have certain criteria that must be met for participation. Please review the following: https://steemit.com/travelfeed/@travelfeed/how-to-participate-use-travelfeed-in-your-posts \n **We require at least 250 words, but your post has only {} words.** \n Thank you very much for your interest and we hope to read some great travel articles from you soon! \n If you believe that you have received this comment by mistake or have updated your post to fit our criteria, please reply to this comment with <code>!tfreview</code>. For further questions, please contact us on the [Steemit Travellers Discord](https://discord.gg/jWWu73H). \n Regards, @travelfeed"
 # Comment for blacklisted users
@@ -62,9 +63,9 @@ blacklisttext = "Hi @{}, \n Thank you for participating in the #travelfeed curat
 # Comment for other languages
 wronglangtext = "Hi @{}, \n Thank you for participating in the #travelfeed curated tag. To maintain a level of quality on the project we have certain criteria that must be met for participation. Please review the following: https://steemit.com/travelfeed/@travelfeed/how-to-participate-use-travelfeed-in-your-posts \n We require at least 250 words **in English**. \n Thank you very much for your interest and we hope to read some great travel articles from you soon! \n The language of your post was automatically detected, if your English text is at least 250 words long or you have updated your post to fit our criteria, please reply to this comment with <code>!tfreview</code> for it to be considered for curation. For further questions, please contact us on the [Steemit Travellers Discord](https://discord.gg/jWWu73H). \n Regards, @travelfeed"
 # Honour text
-honourtext = "Congratulations! Your high-quality travel content was selected by @travelfeed curator @{} and earned you a **partial** upvote. We love your hard work and hope to encourage you to continue to publish strong travel-related content. <br> Thank you for participating in #travelfeed! <center> [![TravelFeed](https://ipfs.busy.org/ipfs/QmZhLuw8WE6JMCYHD3EXn3MBa2CSCcygvfFqfXde5z3TLZ)](https://steemit.com/travelfeed/@travelfeed/introducing-travelfeed-featuring-steemit-s-best-travel-content) <br> **Learn more about our travel project on Steemit by clicking on the banner above and join our community on [Discord](https://discord.gg/jWWu73H)**.</center>"
+honourtext = "Congratulations! Your high-quality travel content was selected by @travelfeed curator @{} and earned you a **partial** upvote. We love your hard work and hope to encourage you to continue to publish strong travel-related content. <br> Thank you for being part of the TravelFeed community! <center> [![TravelFeed](https://ipfs.busy.org/ipfs/QmZhLuw8WE6JMCYHD3EXn3MBa2CSCcygvfFqfXde5z3TLZ)](https://steemit.com/travelfeed/@travelfeed/introducing-travelfeed-featuring-steemit-s-best-travel-content) <br> **Learn more about our travel project on Steemit by clicking on the banner above and join our community on [Discord](https://discord.gg/jWWu73H)**.</center>"
 # Resteem Text
-resteemtext = "Congratulations! Your high-quality travel content was selected by @travelfeed curator @{} and earned you a reward, in form of a **100% upvote** and a **resteem**. Your work really stands out. Your article now has a chance to get curated and featured under the appropriate daily topic of our Travelfeed blog. Thank you for participating in #travelfeed! <br> <center>[![TravelFeed](https://ipfs.busy.org/ipfs/QmNTkoKQNzuQbQGbcZ1exTMjvxYUprdnVczxnvib9VUSqB)](https://steemit.com/travelfeed/@travelfeed/introducing-travelfeed-featuring-steemit-s-best-travel-content) <br> **Learn more about our travel project on Steemit by clicking on the banner above and join our community on [Discord](https://discord.gg/jWWu73H)**</center>"
+resteemtext = "Congratulations! Your high-quality travel content was selected by @travelfeed curator @{} and earned you a reward, in form of a **100% upvote** and a **resteem**. Your work really stands out! Your article now has a chance to get featured under the appropriate daily topic on our TravelFeed blog. <br> Thank you for being part of the TravelFeed community! <br> <center>[![TravelFeed](https://ipfs.busy.org/ipfs/QmNTkoKQNzuQbQGbcZ1exTMjvxYUprdnVczxnvib9VUSqB)](https://steemit.com/travelfeed/@travelfeed/introducing-travelfeed-featuring-steemit-s-best-travel-content) <br> **Learn more about our travel project on Steemit by clicking on the banner above and join our community on [Discord](https://discord.gg/jWWu73H)**</center>"
 # Advote Text
 advotetext = "Great read! Your high-quality travel content was selected by @travelfeed curator @{}. We just gave you a small upvote together with over 60 followers of the @travelfeed curation trail. <br> Have you heard of @travelfeed? Using the #travelfeed tag rewards authors and content creators who produce exceptional travel related articles, so be sure use our tag to get much bigger upvotes, resteems and be featured in our curation posts! <br> <center>[![TravelFeed](https://ipfs.busy.org/ipfs/QmNTkoKQNzuQbQGbcZ1exTMjvxYUprdnVczxnvib9VUSqB)](https://steemit.com/travelfeed/@travelfeed/introducing-travelfeed-featuring-steemit-s-best-travel-content) <br> **Learn more about our travel project on Steemit by clicking on the banner above and join our community on [Discord](https://discord.gg/jWWu73H)**</center>"
 # Manual comment text for short posts
@@ -80,12 +81,14 @@ walletpw =  os.environ.get('UNLOCK') #Beem wallet passphrase must be set as envi
 TOKEN = os.environ.get('TOKEN') #Discord secret token must be set as environment variable
 logger = logging.getLogger(__name__)
 logging.basicConfig(filename=logpath, format='%(asctime)s %(levelname)s: %(message)s', level=logging.INFO)
-node_list = NodeList().get_nodes()
-steem = Steem(node=node_list)
+nl = NodeList()
+node_list = nl.get_nodes()
+steem = Steem(nodes=node_list)
 steem.set_default_nodes(node_list)
 steem.wallet.unlock(walletpw)
 blockchain = Blockchain()
-blacklist = Account(trackaccount).get_mutings(raw_name_list=True)
+acc = Account(curationaccount)
+blacklist = acc.get_mutings(raw_name_list=True)
 
 """
 Discord functions
@@ -110,10 +113,10 @@ async def on_ready():
 async def on_reaction_add(reaction, user):
     """Initiate curation process by adding a reaction"""
     if reaction.message.content.startswith('http'):
-        curator = re.sub(r'\d|\W|(TravelFeed)','',str(user),re.IGNORECASE|re.DOTALL)
+        curator = re.sub(r'\d{4}|\W|(TravelFeed)','',str(user),re.IGNORECASE|re.DOTALL)
         if not user.id in discordcuratorlist and not user.id == botid:
             """Checks if user who added reaction is a curator"""
-            await loop.create_task(send_discord("Curator unauthorised: "+curator, logchannel))
+            await send_discord("Curator unauthorised: "+curator, logchannel)
             return
         else:
             author, permlink = resolve_authorperm(reaction.message.content)
@@ -146,11 +149,11 @@ async def tf100(ctx, link):
     curator = re.sub(r'\d|\W|(TravelFeed)','',str(ctx.message.author),re.IGNORECASE|re.DOTALL)
     if not ctx.message.channel.id == commandchannel:
         """Checks if the command was set in the correct channel"""
-        await loop.create_task(send_discord("Bot commands are only allowed in #bot-commands", ctx.message.channel.id))
+        await send_discord("Bot commands are only allowed in #bot-commands", ctx.message.channel.id)
         return
     if not ctx.message.author.id in discordcuratorlist:
         """Checks if user who used the command is a curator"""
-        await loop.create_task(send_discord("Curator unauthorised: "+curator, logchannel))
+        await send_discord("Curator unauthorised: "+curator, logchannel)
         return
     await bot.add_reaction(ctx.message, "⏳")
     author, permlink = resolve_authorperm(link)
@@ -162,10 +165,10 @@ async def tf100(ctx, link):
 async def tf50(ctx, link):
     curator = re.sub(r'\d|\W|(TravelFeed)','',str(ctx.message.author),re.IGNORECASE|re.DOTALL)
     if not ctx.message.channel.id == commandchannel:
-        await loop.create_task(send_discord("Bot commands are only allowed in #bot-commands", ctx.message.channel.id))
+        await send_discord("Bot commands are only allowed in #bot-commands", ctx.message.channel.id)
         return
     if not ctx.message.author.id in discordcuratorlist:
-        await loop.create_task(send_discord("Curator unauthorised: "+curator, logchannel))
+        await send_discord("Curator unauthorised: "+curator, logchannel)
         return
     await bot.add_reaction(ctx.message, "⏳")
     author, permlink = resolve_authorperm(link)
@@ -176,10 +179,10 @@ async def tf50(ctx, link):
 async def coop100(ctx, link):
     curator = re.sub(r'\d|\W|(TravelFeed)','',str(ctx.message.author),re.IGNORECASE|re.DOTALL)
     if not ctx.message.channel.id == commandchannel:
-        await loop.create_task(send_discord("Bot commands are only allowed in #bot-commands", ctx.message.channel.id))
+        await send_discord("Bot commands are only allowed in #bot-commands", ctx.message.channel.id)
         return
     if not ctx.message.author.id in discordcuratorlist:
-        await loop.create_task(send_discord("Curator unauthorised: "+curator, logchannel))
+        await send_discord("Curator unauthorised: "+curator, logchannel)
         return
     await bot.add_reaction(ctx.message, "⏳")
     author, permlink = resolve_authorperm(link)
@@ -191,10 +194,10 @@ async def coop100(ctx, link):
 async def ad10(ctx, link):
     curator = re.sub(r'\d|\W|(TravelFeed)','',str(ctx.message.author),re.IGNORECASE|re.DOTALL)
     if not ctx.message.channel.id == commandchannel:
-        await loop.create_task(send_discord("Bot commands are only allowed in #bot-commands", ctx.message.channel.id))
+        await send_discord("Bot commands are only allowed in #bot-commands", ctx.message.channel.id)
         return
     if not ctx.message.author.id in discordcuratorlist:
-        await loop.create_task(send_discord("Curator unauthorised: "+curator, logchannel))
+        await send_discord("Curator unauthorised: "+curator, logchannel)
         return
     await bot.add_reaction(ctx.message, "⏳")
     author, permlink = resolve_authorperm(link)
@@ -206,10 +209,10 @@ async def ad10(ctx, link):
 async def short0(ctx, link):
     curator = re.sub(r'\d|\W|(TravelFeed)','',str(ctx.message.author),re.IGNORECASE|re.DOTALL)
     if not ctx.message.channel.id == commandchannel:
-        await loop.create_task(send_discord("Bot commands are only allowed in #bot-commands", ctx.message.channel.id))
+        await send_discord("Bot commands are only allowed in #bot-commands", ctx.message.channel.id)
         return
     if not ctx.message.author.id in discordcuratorlist:
-        await loop.create_task(send_discord("Curator unauthorised: "+curator, logchannel))
+        await send_discord("Curator unauthorised: "+curator, logchannel)
         return
     await bot.add_reaction(ctx.message, "⏳")
     author, permlink = resolve_authorperm(link)
@@ -221,10 +224,10 @@ async def short0(ctx, link):
 async def lang0(ctx, link):
     curator = re.sub(r'\d|\W|(TravelFeed)','',str(ctx.message.author),re.IGNORECASE|re.DOTALL)
     if not ctx.message.channel.id == commandchannel:
-        await loop.create_task(send_discord("Bot commands are only allowed in #bot-commands", ctx.message.channel.id))
+        await send_discord("Bot commands are only allowed in #bot-commands", ctx.message.channel.id)
         return
     if not ctx.message.author.id in discordcuratorlist:
-        await loop.create_task(send_discord("Curator unauthorised: "+curator, logchannel))
+        await send_discord("Curator unauthorised: "+curator, logchannel)
         return
     await bot.add_reaction(ctx.message, "⏳")
     author, permlink = resolve_authorperm(link)
@@ -236,10 +239,10 @@ async def lang0(ctx, link):
 async def copyright0(ctx, link):
     curator = re.sub(r'\d|\W|(TravelFeed)','',str(ctx.message.author),re.IGNORECASE|re.DOTALL)
     if not ctx.message.channel.id == commandchannel:
-        await loop.create_task(send_discord("Bot commands are only allowed in #bot-commands", ctx.message.channel.id))
+        await send_discord("Bot commands are only allowed in #bot-commands", ctx.message.channel.id)
         return
     if not ctx.message.author.id in discordcuratorlist:
-        await loop.create_task(send_discord("Curator unauthorised: "+curator, logchannel))
+        await send_discord("Curator unauthorised: "+curator, logchannel)
         return
     await bot.add_reaction(ctx.message, "⏳")
     author, permlink = resolve_authorperm(link)
@@ -259,7 +262,6 @@ async def rewards(ctx, username):
 @bot.command()
 async def mana():
     """Get current voting mana of @travelfeed"""
-    acc = Account("travelfeed")
     mana = acc.get_manabar()
     await bot.say("The voting mana of @travelfeed is **"+str(round(mana['current_mana_pct'], 2))+"**")
 
@@ -267,9 +269,9 @@ async def mana():
 async def payouts(ctx, time):
     """Get author rewards to be paid out to featured authors for the past *time* days"""
     await bot.say("Fetching rewards history for the past **"+time+"** days to #rewards_log")
-    await loop.create_task(send_discord("*Manual queing initiated*", rewardchannel))
+    await send_discord("*Manual queing initiated*", rewardchannel)
     await stream_rewards(time)
-    await loop.create_task(send_discord("*Manual queing ended*", rewardchannel))
+    await send_discord("*Manual queing ended*", rewardchannel)
 
 @bot.command(pass_context=True)
 async def location(ctx, link):
@@ -314,7 +316,7 @@ class Discord_Message:
         self.message = message
         self.channel = channel
     async def run(self):
-        await loop.create_task(send_discord(self.message, self.channel))
+        await send_discord(self.message, self.channel)
 
 class Post_Action:
     """Class to initiate a curation routine for a post"""
@@ -421,169 +423,193 @@ async def post_do_action(post, action, curator, reaction):
         authorperm = construct_authorperm(post["author"], post["permlink"])
         link = "https://steemit.com/"+authorperm
         if post["author"] in blacklist:
-            await loop.create_task(send_discord("WARNING: Author is blacklisted "+link, logchannel))
+            await send_discord("WARNING: Author is blacklisted "+link, logchannel)
             return
         elif action == "tf100":
             try:
-                post.upvote(weight=100, voter=postaccount)
-                await loop.create_task(send_discord(link, upvotechannel))
+                await send_discord(link, upvotechannel)
+                post.upvote(weight=100, voter=curationaccount)
                 continent_code = get_location(post['body'], "continentcode")
                 if continent_code == "AF" or continent_code == "OC" or continent_code == "AN":
-                    await loop.create_task(send_discord(link, australiaoceaniaafrica))
+                    await send_discord(link, australiaoceaniaafrica)
                 elif continent_code == "AS":
-                    await loop.create_task(send_discord(link, asia))
+                    await send_discord(link, asia)
                 elif continent_code == "EU":
-                    await loop.create_task(send_discord(link, europe))
+                    await send_discord(link, europe)
                 elif continent_code == "SA" or continent_code == "NA":
-                    await loop.create_task(send_discord(link, america))
+                    await send_discord(link, america)
                 elif "food" in post['body'] or " eat" in post['body'] or "restaurant" in post['body']:
-                    await loop.create_task(send_discord(link, foodoftheworld))
+                    await send_discord(link, foodoftheworld)
                 elif "advice" in post['body'] or "budget" in post['body'] or "learn" in post['body']:
-                    await loop.create_task(send_discord(link, traveladvice))
+                    await send_discord(link, traveladvice)
                 else:
-                    await loop.create_task(send_discord(link, nocategory))
+                    await send_discord(link, nocategory)
                 if not reaction == None:
                     await bot.add_reaction(reaction, "🆙")
             except Exception as error:
-                if not "skip_transaction_dupe_check" in repr(error):
+                if not "skip_transaction_dupe_check" in str(error):
                     logger.warning("Could not vote with 100%"+repr(error))
                     try:
-                        await loop.create_task(send_discord("Could not vote with 100% on "+link+" Exception: "+repr(error), logchannel))
+                        await send_discord("Could not vote with 100% on "+link+" Exception: "+repr(error), logchannel)
                         if not reaction == None:
                             await bot.add_reaction(reaction, "🆘")
                     except:
                         logger.warning("Could not send message to Discord")
-                    return
             await asyncio.sleep(4)
             try:
-                post.resteem(identifier=authorperm, account=postaccount)
+                post.resteem(identifier=authorperm, account=curationaccount)
                 if not reaction == None:
                     await bot.add_reaction(reaction, "🔄")
             except Exception as error:
-                logger.warning("Could not resteem post "+repr(error))
-                try:
-                    await loop.create_task(send_discord("Could not resteem "+link+" Exception: "+repr(error), logchannel))
-                    if not reaction == None:
-                        await bot.add_reaction(reaction, "🆘")
-                except:
-                    logger.warning("Could not send message to Discord")
+                if not "skip_transaction_dupe_check" in str(error):
+                    logger.warning("Could not resteem post "+repr(error))
+                    try:
+                        await send_discord("Could not resteem "+link+" Exception: "+repr(error), logchannel)
+                        if not reaction == None:
+                            await bot.add_reaction(reaction, "🆘")
+                    except:
+                        logger.warning("Could not send message to Discord")
             await asyncio.sleep(4)
             try:
-                post.reply(resteemtext.format(curator), author=postaccount)
+                replies = post.get_all_replies()
+                for reply in replies:
+                    if reply["author"] == "travelfeed":
+                        raise Exception("Post already has a comment from @travelfeed!")
+                post.reply(resteemtext.format(curator), author=curationaccount)
                 if not reaction == None:
                     await bot.add_reaction(reaction, "🔤")
             except Exception as error:
                 logger.warning("Could not comment on resteem post "+repr(error))
                 try:
-                    await loop.create_task(send_discord("Could not comment on resteem post "+link+" Exception: "+repr(error), logchannel))
+                    await send_discord("Could not comment on resteem post "+link+" Exception: "+repr(error), logchannel)
                     if not reaction == None:
                         await bot.add_reaction(reaction, "🆘")
                 except:
                     logger.warning("Could not send message to Discord")
         elif action == "tf50":
             try:
-                post.upvote(weight=50, voter=postaccount)
+                post.upvote(weight=50, voter=curationaccount)
                 if not reaction == None:
                     await bot.add_reaction(reaction, "🆗")
-                await loop.create_task(send_discord(link, honourchannel))
+                await send_discord(link, honourchannel)
             except Exception as error:
-                logger.warning("Could not vote with 50%"+repr(error))
-                try:
-                    await loop.create_task(send_discord("Could not vote with 50% on "+link+" Exception: "+repr(error), logchannel))
-                    if not reaction == None:
-                        await bot.add_reaction(reaction, "🆘")
-                except:
-                    logger.warning("Could not send message to Discord")
-                return
+                if not "skip_transaction_dupe_check" in str(error):
+                    logger.warning("Could not vote with 50%"+repr(error))
+                    try:
+                        await send_discord("Could not vote with 50% on "+link+" Exception: "+repr(error), logchannel)
+                        if not reaction == None:
+                            await bot.add_reaction(reaction, "🆘")
+                    except:
+                        logger.warning("Could not send message to Discord")
             await asyncio.sleep(4)
             try:
-                post.reply(honourtext.format(curator), author=postaccount)
+                replies = post.get_all_replies()
+                for reply in replies:
+                    if reply["author"] == "travelfeed":
+                        raise Exception("Post already has a comment from @travelfeed!")
+                post.reply(honourtext.format(curator), author=curationaccount)
                 if not reaction == None:
                     await bot.add_reaction(reaction, "🔤")
             except Exception as error:
                 logger.warning("Could not comment on honour post "+repr(error))
                 try:
-                    await loop.create_task(send_discord("Could not comment on honour post "+link+" Exception: "+repr(error), logchannel))
+                    await send_discord("Could not comment on honour post "+link+" Exception: "+repr(error), logchannel)
                     if not reaction == None:
                         await bot.add_reaction(reaction, "🆘")
                 except:
                     logger.warning("Could not send message to Discord")
         elif action == "coop100":
             try:
-                post.upvote(weight=100, voter=postaccount)
+                post.upvote(weight=100, voter=curationaccount)
                 if not reaction == None:
                     await bot.add_reaction(reaction, "🚻")
             except Exception as error:
-                logger.warning("Could not vote with 100% on cooperation post "+repr(error))
-                try:
-                    await loop.create_task(send_discord("Could not vote with 100% on cooperation post "+link+" Exception: "+repr(error), logchannel))
-                    if not reaction == None:
-                        await bot.add_reaction(reaction, "🆘")
-                except:
-                    logger.warning("Could not send message to Discord")
-                return
+                if not "skip_transaction_dupe_check" in str(error):
+                    logger.warning("Could not vote with 100% on cooperation post "+repr(error))
+                    try:
+                        await send_discord("Could not vote with 100% on cooperation post "+link+" Exception: "+repr(error), logchannel)
+                        if not reaction == None:
+                            await bot.add_reaction(reaction, "🆘")
+                    except:
+                        logger.warning("Could not send message to Discord")
         elif action == "ad10":
             try:
-                post.upvote(weight=10, voter=postaccount)
+                post.upvote(weight=10, voter=curationaccount)
                 if not reaction == None:
                     await bot.add_reaction(reaction, "🔟")
             except Exception as error:
-                logger.warning("Could not vote on ad post "+repr(error))
-                try:
-                    await loop.create_task(send_discord("Could not vote with 10% on ad post "+link+" Exception: "+repr(error), logchannel))
-                    if not reaction == None:
-                        await bot.add_reaction(reaction, "🆘")
-                except:
-                    logger.warning("Could not send message to Discord")
-                return
+                if not "skip_transaction_dupe_check" in str(error):
+                    logger.warning("Could not vote on ad post "+repr(error))
+                    try:
+                        await send_discord("Could not vote with 10% on ad post "+link+" Exception: "+repr(error), logchannel)
+                        if not reaction == None:
+                            await bot.add_reaction(reaction, "🆘")
+                    except:
+                        logger.warning("Could not send message to Discord")
             await asyncio.sleep(4)
             try:
-                post.reply(advotetext.format(curator), author=postaccount)
+                replies = post.get_all_replies()
+                for reply in replies:
+                    if reply["author"] == "travelfeed":
+                        raise Exception("Post already has a comment from @travelfeed!")
+                post.reply(advotetext.format(curator), author=curationaccount)
                 if not reaction == None:
                     await bot.add_reaction(reaction, "🔤")
             except Exception as error:
                 logger.warning("Could not comment on ad post "+repr(error))
                 try:
-                    await loop.create_task(send_discord("Could not comment on ad post "+link+" Exception: "+repr(error), logchannel))
+                    await send_discord("Could not comment on ad post "+link+" Exception: "+repr(error), logchannel)
                     if not reaction == None:
                         await bot.add_reaction(reaction, "🆘")
                 except:
                     logger.warning("Could not send message to Discord")
         elif action == "short0":
             try: 
-                post.reply(manualshorttext.format(post["author"]), author=postaccount)
+                replies = post.get_all_replies()
+                for reply in replies:
+                    if reply["author"] == "travelfeed":
+                        raise Exception("Post already has a comment from @travelfeed!")
+                post.reply(manualshorttext.format(post["author"]), author=curationaccount)
                 if not reaction == None:
                     await bot.add_reaction(reaction, "🔤")
             except Exception as error:
                 logger.warning("Could not comment on short post "+repr(error))
                 try:
-                    await loop.create_task(send_discord("Could not comment on short post "+link+" Exception: "+repr(error), logchannel))
+                    await send_discord("Could not comment on short post "+link+" Exception: "+repr(error), logchannel)
                     if not reaction == None:
                         await bot.add_reaction(reaction, "🆘")
                 except:
                     logger.warning("Could not send message to Discord")
         elif action == "lang0":
             try:  
-                post.reply(manuallangtext.format(post["author"]), author=postaccount)
+                replies = post.get_all_replies()
+                for reply in replies:
+                    if reply["author"] == "travelfeed":
+                        raise Exception("Post already has a comment from @travelfeed!")
+                post.reply(manuallangtext.format(post["author"]), author=curationaccount)
                 if not reaction == None:
                     await bot.add_reaction(reaction, "🔤")
             except Exception as error:
                 logger.warning("Could not comment on non-English post "+repr(error))
                 try:
-                    await loop.create_task(send_discord("Could not comment on non-English post "+link+" Exception: "+repr(error), logchannel))
+                    await send_discord("Could not comment on non-English post "+link+" Exception: "+repr(error), logchannel)
                     if not reaction == None:
                         await bot.add_reaction(reaction, "🆘")
                 except:
                     logger.warning("Could not send message to Discord")
         elif action == "copyright0":
             try: 
-                post.reply(copyrighttext.format(post["author"]), author=postaccount)
+                replies = post.get_all_replies()
+                for reply in replies:
+                    if reply["author"] == "travelfeed":
+                        raise Exception("Post already has a comment from @travelfeed!")
+                post.reply(copyrighttext.format(post["author"]), author=curationaccount)
                 if not reaction == None:
                     await bot.add_reaction(reaction, "🔤")
             except Exception as error:
                 logger.warning("Could not comment on copyright post "+repr(error))
                 try:
-                    await loop.create_task(send_discord("Could not comment on copyright post "+link+" Exception: "+repr(error), logchannel))
+                    await send_discord("Could not comment on copyright post "+link+" Exception: "+repr(error), logchannel)
                     if not reaction == None:
                         await bot.add_reaction(reaction, "🆘")
                 except:
@@ -597,7 +623,7 @@ async def post_do_action(post, action, curator, reaction):
     except Exception as error:
         logger.warning("Could not execute action for post "+str(post)+repr(error))
         try:
-            await loop.create_task(send_discord("Could not execute action on post "+str(post)+" Exception:"+repr(error), logchannel))
+            await send_discord("Could not execute action on post "+str(post)+" Exception:"+repr(error), logchannel)
             if not reaction == None:
                 await bot.add_reaction(reaction, "🆘")
         except:
@@ -608,7 +634,6 @@ Beem background tasks
 """
 async def stream_history():
     """Background task: Gets votes received from travelfeed within the past 7 days every hour"""
-    acc = Account(trackaccount)
     stop = datetime.utcnow() - timedelta(days=7)
     while True:
         global honours
@@ -617,12 +642,12 @@ async def stream_history():
         resteems = {}
         try:
             for vote in acc.history_reverse(stop=stop, only_ops=["vote"]):
-                if vote["voter"] == trackaccount and vote["weight"] == 5000:
+                if vote["voter"] == curationaccount and vote["weight"] == 5000:
                     if vote["author"] not in honours:
                         honours[vote["author"]]=1
                     else:
                         honours[vote["author"]]=honours[vote["author"]]+1
-                elif vote["voter"] == trackaccount and vote["weight"] == 10000:
+                elif vote["voter"] == curationaccount and vote["weight"] == 10000:
                     if vote["author"] not in resteems:
                         resteems[vote["author"]]=1
                     else:
@@ -632,16 +657,35 @@ async def stream_history():
             logger.warning("Could not get history from Blockchain: "+repr(error))
         await asyncio.sleep(60*60) #sleep 1 hour
         
-async def stream_rewards(rewardtime):
+async def send_reward(amount, asset, to, memo):
+    """Send reward to featured author"""
+    try:
+        rewardfile = open(rewardpath, 'a+')
+        rewardfile.seek(0)
+        reward_list = rewardfile.read().splitlines()
+        if amount+asset+to+memo in reward_list:
+            logger.warning("Reward has already been sent!")
+            return
+        #acc.transfer(to=to, amount=amount, asset=asset, memo=memo, account=curationaccount) #activate when ready
+        logger.info("Sent reward of "+amount+" "+asset+" to "+to+" memo: "+memo)
+        rewardfile.write(amount+asset+to+memo+"\n")
+        rewardfile.close()
+        await send_discord("[Testing Mode] Sent **"+str(amount)+" "+asset+"** to **"+to+"**", rewardchannel)
+    except Exception as error:
+        logger.warning("Could not send reward!"+repr(error))
+        await send_discord("**WARNING! ATTENTION REQUIRED!** Could not send reward of **"+str(amount)+" "+asset+"** to **"+to+"**"+" memo: "+memo+" due to this error: "+repr(error), rewardchannel)
+    await asyncio.sleep(4)
+    return
+
+async def stream_rewards(backintime):
     """Background task: Scans blockchain for travelfeed author rewards, extracts mentions and determines which reward should be sent to mentioned users every six hours"""
     #Todo when code has been tested: Send out rewards automatically
     while True:
         try:
-            if rewardtime == None:
+            if backintime == None:
                 rewardtime = 6
             else:
-                rewardtime = int(rewardtime)*24
-            acc = Account(trackaccount)
+                rewardtime = int(backintime)*24
             stop = datetime.utcnow() - timedelta(hours=rewardtime)
             for reward in acc.history_reverse(stop=stop, only_ops=["author_reward"]):
                 authorperm = construct_authorperm(reward["author"], reward["permlink"])
@@ -678,31 +722,61 @@ async def stream_rewards(rewardtime):
                     continue
                 logger.info("Found author reward for post https://steemit.com/"+authorperm)
                 if steemreward == None: #Payouts in Steem, SBD or both are supported
-                    await loop.create_task(send_discord("Found author reward of "+str(sbdreward)+" SBD for post https://steemit.com/"+authorperm+". Half of the liquid SBD rewards will be split between the featured authors "+str(mentions)+". Memo: `"+memo+"`", rewardchannel))
+                    await send_discord("Found author reward of "+str(sbdreward)+" SBD for post https://steemit.com/"+authorperm+". Half of the liquid SBD rewards will be split between the featured authors "+str(mentions)+". Memo: `"+memo+"`", rewardchannel)
                     for postauthor in mentionsdict:
                         payout = round((mentionsdict[postauthor]/(mentionsnr*2)*sbdreward), 3)
-                        await loop.create_task(send_discord("Please send the reward of **"+str(payout)+" SBD** to **"+postauthor+"**", rewardchannel))
+                        if backintime == None:
+                            await send_reward(payout, 'SBD', postauthor, memo)
+                        else:
+                            await send_discord("Please send the reward of **"+str(payout)+" SBD** to **"+postauthor+"**", rewardchannel)
                 elif sbdreward == None:
-                    await loop.create_task(send_discord("Found author reward of "+str(steemreward)+" STEEM for post https://steemit.com/"+authorperm+". Half of the liquid STEEM rewards will be split between the featured authors "+str(mentions)+". Memo: `"+memo+"`", rewardchannel))
+                    await send_discord("Found author reward of "+str(steemreward)+" STEEM for post https://steemit.com/"+authorperm+". Half of the liquid STEEM rewards will be split between the featured authors "+str(mentions)+". Memo: `"+memo+"`", rewardchannel)
                     for postauthor in mentionsdict:
                         payout = round((mentionsdict[postauthor]/(mentionsnr*2)*steemreward), 3)
-                        await loop.create_task(send_discord("Please send the reward of **"+str(payout)+" Steem** to **"+postauthor+"**", rewardchannel))
+                        if backintime == None:
+                            await send_reward(payout, 'STEEM', postauthor, memo)
+                        else:
+                            await send_discord("Please send the reward of **"+str(payout)+" Steem** to **"+postauthor+"**", rewardchannel)
                 else:
-                    await loop.create_task(send_discord("Found author reward of "+str(steemreward)+" STEEM and "+str(sbdreward)+" SBD for post https://steemit.com/"+authorperm+". Half of the liquid rewards will be split between the featured authors "+str(mentions)+". Memo: `"+memo+"`", rewardchannel))
+                    await send_discord("Found author reward of "+str(steemreward)+" STEEM and "+str(sbdreward)+" SBD for post https://steemit.com/"+authorperm+". Half of the liquid rewards will be split between the featured authors "+str(mentions)+". Memo: `"+memo+"`", rewardchannel)
                     for postauthor in mentionsdict:
                         steempayout = round((mentionsdict[postauthor]/(mentionsnr*2)*steemreward), 3)
                         sbdpayout = round((mentionsdict[postauthor]/(mentionsnr*2)*sbdreward), 3)
-                        await loop.create_task(send_discord("Please send the reward of **"+str(steempayout)+" Steem** and **"+str(sbdpayout)+" SBD** to **"+postauthor+"**", rewardchannel))
-                await loop.create_task(send_discord(":boom: :boom: :boom: :boom: :boom: :boom:", rewardchannel))
+                        if backintime == None:
+                            await send_reward(steempayout, 'STEEM', postauthor, memo)
+                            await send_reward(sbdpayout, 'SBD', postauthor, memo)
+                        else:
+                            await send_discord("Please send the reward of **"+str(steempayout)+" Steem** and **"+str(sbdpayout)+" SBD** to **"+postauthor+"**", rewardchannel)
+                await send_discord(":boom: :boom: :boom: :boom: :boom: :boom:", rewardchannel)
             logger.info("Got rewards from Blockchain")
-            if rewardtime == None:
-                await asyncio.sleep(60*60*6) #sleep for 6 hours
-            else:
-                return
         except Exception as error:
             logger.warning("Could not stream rewards: "+repr(error))
-            await loop.create_task(send_discord("Could not stream rewards: "+repr(error), rewardchannel))
+            await send_discord("Could not stream rewards: "+repr(error), rewardchannel)
+        if not backintime == None:
+            return
+        await asyncio.sleep(60*60*6) #sleep for 6 hours
 
+async def claim_accounts():
+    rc = RC(steem_instance=steem)
+    while True:
+        try:
+            current_costs = steem.get_rc_cost(rc.get_resource_count(tx_size=250, new_account_op_count=1))
+            manabar = acc.get_rc_manabar()
+            current_mana = manabar["current_mana"]
+            mana_pct = manabar["current_pct"]
+            last_mana = current_mana
+            if current_costs + 10000000000000 < current_mana and mana_pct > 70.0:
+                steem.claim_account(acc)
+                await asyncio.sleep(10)
+                acc.refresh()
+                current_mana = acc.get_rc_manabar()["current_mana"]
+                logger.info("Account claimed and %.2f G RC paid." % ((last_mana - current_mana) / 1e9))
+                last_mana = current_mana
+            else:
+                logger.info("Not enough RC for an account claim!")
+        except Exception as error:
+            logger.warning("Could not run claim-account: "+repr(error))
+        await asyncio.sleep(60*60*6) #sleep for 6 hours
 
 def stream_comments(sync_q):
     """Main task: Starts comment stream from the blockchain"""
@@ -712,125 +786,137 @@ def stream_comments(sync_q):
         starting_point = int(blockfile.read())
         blockfile.close()
     except:
+        starting_point = None
+    while True:
+        """Continuously stream comment objects from Blockchain, react to relevant one"""
+        if starting_point == None:
+            try:
+                props = steem.get_dynamic_global_properties()
+                starting_point = props['last_irreversible_block_num']
+            except:
+                nl.update_nodes(weights=None, steem_instance=steem)
+                stream_comments(sync_q)
         try:
-            props = steem.get_dynamic_global_properties()
-            starting_point = props['last_irreversible_block_num']
-        except:
+            stream = map(Comment, blockchain.stream(start=starting_point, opNames=["comment"]))
+            logger.info("Stream from blockchain started at block "+str(starting_point))
+        except Exception as error:
+            logger.warning("Could not start blockchain stream "+repr(error))
+            nl.update_nodes(weights=None, steem_instance=steem)
             stream_comments(sync_q)
-    try:
-        stream = map(Comment, blockchain.stream(start=starting_point, opNames=["comment"]))
-        logger.info("Stream from blockchain started at block "+str(starting_point))
-    except Exception as error:
-        logger.warning("Could not start blockchain stream "+repr(error))
-        stream_comments(starting_point)
-    """Continuously stream comment objects from Blockchain, react to relevant one"""
-    for post in stream:
-        try:
-            post.refresh()
-            tags = post["tags"]
-            author = post["author"]
-            body = post["body"]
-            authorperm = construct_authorperm(author, post['permlink'])
-            if post.is_comment():
-                if author in curatorlist:                
-                    """Initiates an action if a curator uses the invocation command in a comment"""
-                    parent = post.get_parent()
-                    if "!tf50" in body:
-                        sync_q.put(Post_Action(parent, "tf50", author, None))
-                    elif "!tf100" in body:
-                        sync_q.put(Post_Action(parent, "tf100", author, None))
-                    elif "!coop100" in body:
-                        sync_q.put(Post_Action(parent, "coop100", None, None))
-                    elif "!ad10" in body:
-                        sync_q.put(Post_Action(parent, "ad10", author, None)) 
-                elif "!tfreview" in body:
-                    """Users targeted by bot comments can have their posts manually reviewed"""
-                    if post.parent_author == postaccount:
+        starting_point = None
+        for post in stream:
+            try:
+                post.refresh()
+                tags = post["tags"]
+                author = post["author"]
+                body = post["body"]
+                authorperm = construct_authorperm(author, post['permlink'])
+                if post.is_comment():
+                    if author in curatorlist:                
+                        """Initiates an action if a curator uses the invocation command in a comment"""
                         parent = post.get_parent()
-                        parentlink = construct_authorperm(parent['author'], parent['permlink'])
-                        logger.info("@{} requests manual review ".format(author))
-                        history = get_history(author)
-                        try:
-                            sync_q.put(Discord_Message("Author requests manual review: "+history, feedchannel))
-                            sync_q.put(Discord_Message("https://steemit.com/"+parentlink, feedchannel))
-                        except:
-                            logger.warning("Could not send message to Discord")
-                        try:
-                            post.reply("Thanks! We will review your post.", author=postaccount)
-                        except:
-                            logger.warning("Could not send reply to !tfreview reuester")
-            elif post.is_main_post() and tracktag in tags and not author in whitelist:
-                """Checks for each *post* in #travelfeed if it fits the criteria"""
-                commenttext = ""
-                if post.time_elapsed() > timedelta(minutes=2) or post in processed_posts: #If a post is edited within the first two minutes it would be processed twice without checking for the second condition. The array of processed posts does not need to be saved at exit since it is only relevant for two minutes
-                    logger.info("Ignoring updated post")
-                    continue
-                elif author in blacklist: 
-                    commenttext = blacklisttext
-                    logger.info("Detected post by blacklisted user @{}".format(author))
-                else:
-                    try:
-                        content = re.sub(r'\w+:\/{2}[\d\w-]+(\.[\d\w-]+)*(?:(?:\/[^\s/]*))*', '', ''.join(BeautifulSoup(markdown(body), "html.parser").findAll(text=True)))
-                        count = len(content.split(" "))
-                        check_eligible = is_eligible(content, 225, "en")
-                        if count < 240:
-                            commenttext = shortposttext
-                            logger.info("Detected short post by @{} who posted with just {} words".format(author, count))
-                        elif check_eligible == False:
-                            commenttext = wronglangtext
-                            logger.info("Detected post by @{} who posted not in English".format(author))
-                        else:
-                            logger.info("Sending awesome post by @{} to Discord feed".format(author))
+                        if "!tf50" in body:
+                            logger.info("Found !tf50 in curator comment")
+                            sync_q.put(Post_Action(parent, "tf50", author, None))
+                        elif "!tf100" in body:
+                            logger.info("Found !tf100 in curator comment")
+                            sync_q.put(Post_Action(parent, "tf100", author, None))
+                        elif "!coop100" in body:
+                            sync_q.put(Post_Action(parent, "coop100", None, None))
+                        elif "!ad10" in body:
+                            sync_q.put(Post_Action(parent, "ad10", author, None)) 
+                    elif "!tfreview" in body:
+                        """Users targeted by bot comments can have their posts manually reviewed"""
+                        if post.parent_author == curationaccount:
+                            parent = post.get_parent()
+                            parentlink = construct_authorperm(parent['author'], parent['permlink'])
+                            logger.info("@{} requests manual review ".format(author))
+                            history = get_history(author)
                             try:
-                                history = get_history(author)
-                                location = get_location(body, None)
-                            except:
-                                history = ""
-                                location = None
-                            if location == None:
-                                msg = history+". **"+str(count)+"** words."
-                            else:
-                                msg = history+". **"+str(count)+"** words. Location: **"+location+"**"
-                            try:
-                                sync_q.put(Discord_Message(msg, feedchannel))
-                                sync_q.put(Discord_Message("https://steemit.com/"+authorperm, feedchannel))
+                                sync_q.put(Discord_Message("Author requests manual review: "+history, feedchannel))
+                                sync_q.put(Discord_Message("https://steemit.com/"+parentlink, feedchannel))
                             except:
                                 logger.warning("Could not send message to Discord")
-                    except Exception as error:
-                        logger.warning("Error during content processing "+repr(error))
+                            try:
+                                post.reply("Thanks! We will review your post.", author=curationaccount)
+                            except:
+                                logger.warning("Could not send reply to !tfreview reuester")
+                elif post.is_main_post() and tracktag in tags and not author in whitelist:
+                    """Checks for each *post* in #travelfeed if it fits the criteria"""
+                    commenttext = ""
+                    if post.time_elapsed() > timedelta(minutes=2) or post in processed_posts: #If a post is edited within the first two minutes it would be processed twice without checking for the second condition. The array of processed posts does not need to be saved at exit since it is only relevant for two minutes
+                        logger.info("Ignoring updated post")
                         continue
-                if not commenttext == "":
-                    try:
-                        post.reply(commenttext.format(author, count), author=postaccount)
-                        logger.info("I sucessfully left a comment for @{}".format(author))
-                    except:
-                        logger.warning("There was an error posting the comment.")
+                    elif author in blacklist: 
+                        commenttext = blacklisttext
+                        logger.info("Detected post by blacklisted user @{}".format(author))
+                    else:
                         try:
-                            sync_q.put(Discord_Message("Could not leave a comment for bad post https://steemit.com/"+authorperm, logchannel))
-                        except:
-                            logger.warning("Could not send message to Discord")
-                        continue
-                processed_posts += [authorperm]
-            elif post.is_main_post() and (adtag1 in tags) and not tracktag in tags:
-                """Checks if post is in adtag and eligable for advertisement"""
-                content = re.sub(r'\w+:\/{2}[\d\w-]+(\.[\d\w-]+)*(?:(?:\/[^\s/]*))*', '', ''.join(BeautifulSoup(markdown(body), "html.parser").findAll(text=True)))
-                if is_eligible(content, 400, "en"):
-                    adfile = open(autpath, 'a+')
-                    adfile.seek(0)
-                    author_list = adfile.read().splitlines()
-                    if not author in author_list:
+                            content = re.sub(r'\w+:\/{2}[\d\w-]+(\.[\d\w-]+)*(?:(?:\/[^\s/]*))*', '', ''.join(BeautifulSoup(markdown(body), "html.parser").findAll(text=True)))
+                            count = len(content.split(" "))
+                            check_eligible = is_eligible(content, 225, "en")
+                            if count < 240:
+                                commenttext = shortposttext
+                                logger.info("Detected short post by @{} who posted with just {} words".format(author, count))
+                            elif check_eligible == False:
+                                commenttext = wronglangtext
+                                logger.info("Detected post by @{} who posted not in English".format(author))
+                            else:
+                                logger.info("Sending awesome post by @{} to Discord feed".format(author))
+                                try:
+                                    history = get_history(author)
+                                    location = get_location(body, None)
+                                except:
+                                    history = ""
+                                    location = None
+                                if location == None:
+                                    msg = history+". **"+str(count)+"** words."
+                                else:
+                                    msg = history+". **"+str(count)+"** words. Location: **"+location+"**"
+                                try:
+                                    sync_q.put(Discord_Message(msg, feedchannel))
+                                    sync_q.put(Discord_Message("https://steemit.com/"+authorperm, feedchannel))
+                                except:
+                                    logger.warning("Could not send message to Discord")
+                        except Exception as error:
+                            logger.warning("Error during content processing "+repr(error))
+                            continue
+                    if not commenttext == "":
                         try:
-                            adfile.write("\n"+author)
-                            sync_q.put(Discord_Message("https://steemit.com/"+authorperm, adchannel))
-                            logger.info("Found an advertisement post by @{}".format(author))
+                            replies = post.get_all_replies()
+                            for reply in replies:
+                                if reply["author"] == "travelfeed":
+                                    raise Exception("Post already has a comment from @travelfeed!")
+                            post.reply(commenttext.format(author, count), author=curationaccount)
+                            logger.info("I sucessfully left a comment for @{}".format(author))
                         except:
-                            logger.warning("Could not promote advertisement post by @{}".format(author))
-                        adfile.close()
+                            logger.warning("There was an error posting the comment.")
+                            try:
+                                sync_q.put(Discord_Message("Could not leave a comment for bad post https://steemit.com/"+authorperm, logchannel))
+                            except:
+                                logger.warning("Could not send message to Discord")
+                            continue
+                    processed_posts += [authorperm]
+                elif post.is_main_post() and (adtag1 in tags) and not tracktag in tags:
+                    """Checks if post is in adtag and eligable for advertisement"""
+                    content = re.sub(r'\w+:\/{2}[\d\w-]+(\.[\d\w-]+)*(?:(?:\/[^\s/]*))*', '', ''.join(BeautifulSoup(markdown(body), "html.parser").findAll(text=True)))
+                    if is_eligible(content, 400, "en"):
                         adfile = open(autpath, 'a+')
-        except ContentDoesNotExistsException:
-            continue
-        except Exception as error:
-            logger.warning("Exception during post processing: "+repr(error))
+                        adfile.seek(0)
+                        author_list = adfile.read().splitlines()
+                        if not author in author_list:
+                            try:
+                                adfile.write("\n"+author)
+                                sync_q.put(Discord_Message("https://steemit.com/"+authorperm, adchannel))
+                                logger.info("Found an advertisement post by @{}".format(author))
+                            except:
+                                logger.warning("Could not promote advertisement post by @{}".format(author))
+                            adfile.close()
+                            adfile = open(autpath, 'a+')
+            except ContentDoesNotExistsException:
+                continue
+            except Exception as error:
+                logger.warning("Exception during post processing: "+repr(error))
 
 if __name__ == '__main__':
     """
@@ -841,6 +927,7 @@ if __name__ == '__main__':
     actionqueue = queue.sync_q
     loop.create_task(stream_history())
     loop.create_task(stream_rewards(None))
+    loop.create_task(claim_accounts())
     loop.create_task(queue_worker(actionqueue))
     threaded = loop.run_in_executor(None, stream_comments, actionqueue)
     while True:

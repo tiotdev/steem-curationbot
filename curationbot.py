@@ -81,14 +81,7 @@ walletpw =  os.environ.get('UNLOCK') #Beem wallet passphrase must be set as envi
 TOKEN = os.environ.get('TOKEN') #Discord secret token must be set as environment variable
 logger = logging.getLogger(__name__)
 logging.basicConfig(filename=logpath, format='%(asctime)s %(levelname)s: %(message)s', level=logging.INFO)
-nl = NodeList()
-node_list = nl.get_nodes()
-steem = Steem(nodes=node_list)
-steem.set_default_nodes(node_list)
-steem.wallet.unlock(walletpw)
-blockchain = Blockchain()
-acc = Account(curationaccount)
-blacklist = acc.get_mutings(raw_name_list=True)
+
 
 """
 Discord functions
@@ -146,7 +139,7 @@ async def on_reaction_add(reaction, user):
 """Initiate curation process by using Discord commands"""
 @bot.command(pass_context=True)
 async def tf100(ctx, link):
-    curator = re.sub(r'\d|\W|(TravelFeed)','',str(ctx.message.author),re.IGNORECASE|re.DOTALL)
+    curator = re.sub(r'\d{4}|\W|(TravelFeed)','',str(ctx.message.author),re.IGNORECASE|re.DOTALL)
     if not ctx.message.channel.id == commandchannel:
         """Checks if the command was set in the correct channel"""
         await send_discord("Bot commands are only allowed in #bot-commands", ctx.message.channel.id)
@@ -163,7 +156,7 @@ async def tf100(ctx, link):
 
 @bot.command(pass_context=True)
 async def tf50(ctx, link):
-    curator = re.sub(r'\d|\W|(TravelFeed)','',str(ctx.message.author),re.IGNORECASE|re.DOTALL)
+    curator = re.sub(r'\d{4}|\W|(TravelFeed)','',str(ctx.message.author),re.IGNORECASE|re.DOTALL)
     if not ctx.message.channel.id == commandchannel:
         await send_discord("Bot commands are only allowed in #bot-commands", ctx.message.channel.id)
         return
@@ -177,7 +170,7 @@ async def tf50(ctx, link):
 
 @bot.command(pass_context=True)
 async def coop100(ctx, link):
-    curator = re.sub(r'\d|\W|(TravelFeed)','',str(ctx.message.author),re.IGNORECASE|re.DOTALL)
+    curator = re.sub(r'\d{4}|\W|(TravelFeed)','',str(ctx.message.author),re.IGNORECASE|re.DOTALL)
     if not ctx.message.channel.id == commandchannel:
         await send_discord("Bot commands are only allowed in #bot-commands", ctx.message.channel.id)
         return
@@ -192,7 +185,7 @@ async def coop100(ctx, link):
 
 @bot.command(pass_context=True)
 async def ad10(ctx, link):
-    curator = re.sub(r'\d|\W|(TravelFeed)','',str(ctx.message.author),re.IGNORECASE|re.DOTALL)
+    curator = re.sub(r'\d{4}|\W|(TravelFeed)','',str(ctx.message.author),re.IGNORECASE|re.DOTALL)
     if not ctx.message.channel.id == commandchannel:
         await send_discord("Bot commands are only allowed in #bot-commands", ctx.message.channel.id)
         return
@@ -207,7 +200,7 @@ async def ad10(ctx, link):
 
 @bot.command(pass_context=True)
 async def short0(ctx, link):
-    curator = re.sub(r'\d|\W|(TravelFeed)','',str(ctx.message.author),re.IGNORECASE|re.DOTALL)
+    curator = re.sub(r'\d{4}|\W|(TravelFeed)','',str(ctx.message.author),re.IGNORECASE|re.DOTALL)
     if not ctx.message.channel.id == commandchannel:
         await send_discord("Bot commands are only allowed in #bot-commands", ctx.message.channel.id)
         return
@@ -222,7 +215,7 @@ async def short0(ctx, link):
 
 @bot.command(pass_context=True)
 async def lang0(ctx, link):
-    curator = re.sub(r'\d|\W|(TravelFeed)','',str(ctx.message.author),re.IGNORECASE|re.DOTALL)
+    curator = re.sub(r'\d{4}|\W|(TravelFeed)','',str(ctx.message.author),re.IGNORECASE|re.DOTALL)
     if not ctx.message.channel.id == commandchannel:
         await send_discord("Bot commands are only allowed in #bot-commands", ctx.message.channel.id)
         return
@@ -237,7 +230,7 @@ async def lang0(ctx, link):
  
 @bot.command(pass_context=True) 
 async def copyright0(ctx, link):
-    curator = re.sub(r'\d|\W|(TravelFeed)','',str(ctx.message.author),re.IGNORECASE|re.DOTALL)
+    curator = re.sub(r'\d{4}|\W|(TravelFeed)','',str(ctx.message.author),re.IGNORECASE|re.DOTALL)
     if not ctx.message.channel.id == commandchannel:
         await send_discord("Bot commands are only allowed in #bot-commands", ctx.message.channel.id)
         return
@@ -262,6 +255,7 @@ async def rewards(ctx, username):
 @bot.command()
 async def mana():
     """Get current voting mana of @travelfeed"""
+    acc = Account("travelfeed")
     mana = acc.get_manabar()
     await bot.say("The voting mana of @travelfeed is **"+str(round(mana['current_mana_pct'], 2))+"**")
 
@@ -663,14 +657,15 @@ async def send_reward(amount, asset, to, memo):
         rewardfile = open(rewardpath, 'a+')
         rewardfile.seek(0)
         reward_list = rewardfile.read().splitlines()
-        if amount+asset+to+memo in reward_list:
+        if str(amount)+asset+to+memo in reward_list:
             logger.warning("Reward has already been sent!")
+            await send_discord("Reward already sent", rewardchannel)
             return
-        #acc.transfer(to=to, amount=amount, asset=asset, memo=memo, account=curationaccount) #activate when ready
-        logger.info("Sent reward of "+amount+" "+asset+" to "+to+" memo: "+memo)
-        rewardfile.write(amount+asset+to+memo+"\n")
+        rewardfile.write(str(amount)+asset+to+memo+"\n")
         rewardfile.close()
-        await send_discord("[Testing Mode] Sent **"+str(amount)+" "+asset+"** to **"+to+"**", rewardchannel)
+        acc.transfer(to=to, amount=amount, asset=asset, memo=memo, account=curationaccount)
+        logger.info("Sent reward of "+str(amount)+" "+asset+" to "+to+" memo: "+memo)
+        await send_discord("Sent **"+str(amount)+" "+asset+"** to **"+to+"**", rewardchannel)
     except Exception as error:
         logger.warning("Could not send reward!"+repr(error))
         await send_discord("**WARNING! ATTENTION REQUIRED!** Could not send reward of **"+str(amount)+" "+asset+"** to **"+to+"**"+" memo: "+memo+" due to this error: "+repr(error), rewardchannel)
@@ -679,15 +674,29 @@ async def send_reward(amount, asset, to, memo):
 
 async def stream_rewards(backintime):
     """Background task: Scans blockchain for travelfeed author rewards, extracts mentions and determines which reward should be sent to mentioned users every six hours"""
-    #Todo when code has been tested: Send out rewards automatically
     while True:
         try:
             if backintime == None:
                 rewardtime = 6
+            elif int(backintime) > 3:
+                await send_discord("Can only go back up to 3 days", rewardchannel)
+                return
             else:
                 rewardtime = int(backintime)*24
             stop = datetime.utcnow() - timedelta(hours=rewardtime)
-            for reward in acc.history_reverse(stop=stop, only_ops=["author_reward"]):
+            stream = acc.history_reverse(stop=stop, only_ops=["author_reward"])
+        except Exception as error:
+            logger.warning("Updating nodes: "+repr(error))
+            await send_discord("Updating nodes: "+repr(error), rewardchannel)
+            try:
+                nl.update_nodes(weights=None, steem_instance=steem)
+                steem = Steem(nodes=node_list)
+                stream = acc.history_reverse(stop=stop, only_ops=["author_reward"])
+            except:
+                logger.warning("Could not update nodes: "+repr(error))
+                await send_discord("Could not update nodes: "+repr(error), rewardchannel)
+        try:
+            for reward in stream:
                 authorperm = construct_authorperm(reward["author"], reward["permlink"])
                 post = Comment(authorperm)
                 if not "Weekly Round-Up" in post["title"]:
@@ -725,33 +734,26 @@ async def stream_rewards(backintime):
                     await send_discord("Found author reward of "+str(sbdreward)+" SBD for post https://steemit.com/"+authorperm+". Half of the liquid SBD rewards will be split between the featured authors "+str(mentions)+". Memo: `"+memo+"`", rewardchannel)
                     for postauthor in mentionsdict:
                         payout = round((mentionsdict[postauthor]/(mentionsnr*2)*sbdreward), 3)
-                        if backintime == None:
-                            await send_reward(payout, 'SBD', postauthor, memo)
-                        else:
-                            await send_discord("Please send the reward of **"+str(payout)+" SBD** to **"+postauthor+"**", rewardchannel)
+                        await send_reward(payout, 'SBD', postauthor, memo)
                 elif sbdreward == None:
                     await send_discord("Found author reward of "+str(steemreward)+" STEEM for post https://steemit.com/"+authorperm+". Half of the liquid STEEM rewards will be split between the featured authors "+str(mentions)+". Memo: `"+memo+"`", rewardchannel)
                     for postauthor in mentionsdict:
                         payout = round((mentionsdict[postauthor]/(mentionsnr*2)*steemreward), 3)
-                        if backintime == None:
-                            await send_reward(payout, 'STEEM', postauthor, memo)
-                        else:
-                            await send_discord("Please send the reward of **"+str(payout)+" Steem** to **"+postauthor+"**", rewardchannel)
+                        await send_reward(payout, 'STEEM', postauthor, memo)
                 else:
                     await send_discord("Found author reward of "+str(steemreward)+" STEEM and "+str(sbdreward)+" SBD for post https://steemit.com/"+authorperm+". Half of the liquid rewards will be split between the featured authors "+str(mentions)+". Memo: `"+memo+"`", rewardchannel)
                     for postauthor in mentionsdict:
                         steempayout = round((mentionsdict[postauthor]/(mentionsnr*2)*steemreward), 3)
                         sbdpayout = round((mentionsdict[postauthor]/(mentionsnr*2)*sbdreward), 3)
-                        if backintime == None:
-                            await send_reward(steempayout, 'STEEM', postauthor, memo)
-                            await send_reward(sbdpayout, 'SBD', postauthor, memo)
-                        else:
-                            await send_discord("Please send the reward of **"+str(steempayout)+" Steem** and **"+str(sbdpayout)+" SBD** to **"+postauthor+"**", rewardchannel)
+                        await send_reward(steempayout, 'STEEM', postauthor, memo)
+                        await send_reward(sbdpayout, 'SBD', postauthor, memo)
                 await send_discord(":boom: :boom: :boom: :boom: :boom: :boom:", rewardchannel)
             logger.info("Got rewards from Blockchain")
         except Exception as error:
             logger.warning("Could not stream rewards: "+repr(error))
             await send_discord("Could not stream rewards: "+repr(error), rewardchannel)
+            nl.update_nodes(weights=None, steem_instance=steem)
+            steem = Steem(nodes=node_list)
         if not backintime == None:
             return
         await asyncio.sleep(60*60*6) #sleep for 6 hours
@@ -761,6 +763,7 @@ async def claim_accounts():
     while True:
         try:
             current_costs = steem.get_rc_cost(rc.get_resource_count(tx_size=250, new_account_op_count=1))
+            acc = Account("travelfeed")
             manabar = acc.get_rc_manabar()
             current_mana = manabar["current_mana"]
             mana_pct = manabar["current_pct"]
@@ -780,30 +783,16 @@ async def claim_accounts():
 
 def stream_comments(sync_q):
     """Main task: Starts comment stream from the blockchain"""
-    processed_posts = []
-    try:
-        blockfile = open(startblock, 'r')
-        starting_point = int(blockfile.read())
-        blockfile.close()
-    except:
-        starting_point = None
     while True:
         """Continuously stream comment objects from Blockchain, react to relevant one"""
-        if starting_point == None:
-            try:
-                props = steem.get_dynamic_global_properties()
-                starting_point = props['last_irreversible_block_num']
-            except:
-                nl.update_nodes(weights=None, steem_instance=steem)
-                stream_comments(sync_q)
         try:
-            stream = map(Comment, blockchain.stream(start=starting_point, opNames=["comment"]))
-            logger.info("Stream from blockchain started at block "+str(starting_point))
+            stream = map(Comment, blockchain.stream(opNames=["comment"]))
+            logger.info("Stream from blockchain started")
         except Exception as error:
             logger.warning("Could not start blockchain stream "+repr(error))
-            nl.update_nodes(weights=None, steem_instance=steem)
+            # nl.update_nodes(weights=None, steem_instance=steem)
+            # steem = Steem(nodes=node_list)
             stream_comments(sync_q)
-        starting_point = None
         for post in stream:
             try:
                 post.refresh()
@@ -812,7 +801,7 @@ def stream_comments(sync_q):
                 body = post["body"]
                 authorperm = construct_authorperm(author, post['permlink'])
                 if post.is_comment():
-                    if author in curatorlist:                
+                    if author in curatorlist:
                         """Initiates an action if a curator uses the invocation command in a comment"""
                         parent = post.get_parent()
                         if "!tf50" in body:
@@ -917,11 +906,20 @@ def stream_comments(sync_q):
                 continue
             except Exception as error:
                 logger.warning("Exception during post processing: "+repr(error))
+                continue
 
 if __name__ == '__main__':
     """
     Starting the bot. An optional custom starting block can be defined in the optional *startblock* file.
     """
+    nl = NodeList()
+    node_list = nl.get_nodes()
+    steem = Steem(nodes=node_list)
+    steem.set_default_nodes(node_list)
+    steem.wallet.unlock(walletpw)
+    blockchain = Blockchain()
+    acc = Account(curationaccount)
+    blacklist = acc.get_mutings(raw_name_list=True)
     loop = asyncio.get_event_loop()
     queue = janus.Queue(loop=loop) #janus enables the synchronous beem library to work with the asynchronous Discord.py library
     actionqueue = queue.sync_q

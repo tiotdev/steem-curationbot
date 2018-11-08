@@ -81,7 +81,14 @@ walletpw =  os.environ.get('UNLOCK') #Beem wallet passphrase must be set as envi
 TOKEN = os.environ.get('TOKEN') #Discord secret token must be set as environment variable
 logger = logging.getLogger(__name__)
 logging.basicConfig(filename=logpath, format='%(asctime)s %(levelname)s: %(message)s', level=logging.INFO)
-
+nl = NodeList()
+node_list = nl.get_nodes()
+steem = Steem(nodes=node_list)
+steem.set_default_nodes(node_list)
+steem.wallet.unlock(walletpw)
+blockchain = Blockchain()
+acc = Account(curationaccount)
+blacklist = acc.get_mutings(raw_name_list=True)
 
 """
 Discord functions
@@ -678,8 +685,8 @@ async def stream_rewards(backintime):
         try:
             if backintime == None:
                 rewardtime = 6
-            elif int(backintime) > 3:
-                await send_discord("Can only go back up to 3 days", rewardchannel)
+            elif int(backintime) > 7:
+                await send_discord("Can only go back up to 7 days", rewardchannel)
                 return
             else:
                 rewardtime = int(backintime)*24
@@ -689,8 +696,7 @@ async def stream_rewards(backintime):
             logger.warning("Updating nodes: "+repr(error))
             await send_discord("Updating nodes: "+repr(error), rewardchannel)
             try:
-                nl.update_nodes(weights=None, steem_instance=steem)
-                steem = Steem(nodes=node_list)
+                steem.rpc.next()
                 stream = acc.history_reverse(stop=stop, only_ops=["author_reward"])
             except:
                 logger.warning("Could not update nodes: "+repr(error))
@@ -709,7 +715,7 @@ async def stream_rewards(backintime):
                     steemreward = None
                 else:
                     steemreward = float(re.sub("( STEEM)",'',reward['steem_payout'],re.IGNORECASE|re.DOTALL))
-                myre = re.compile(r"@([a-zA-Z0-9-]+)<")
+                myre = re.compile(r'\bwritten by \<a href\="https:\/\/steemit.com\/@\b([a-zA-Z0-9-]+)\">')
                 mentions = list(myre.findall(post["body"]))
                 for curator in curatorlist:
                     if curator in mentions:
@@ -752,8 +758,7 @@ async def stream_rewards(backintime):
         except Exception as error:
             logger.warning("Could not stream rewards: "+repr(error))
             await send_discord("Could not stream rewards: "+repr(error), rewardchannel)
-            nl.update_nodes(weights=None, steem_instance=steem)
-            steem = Steem(nodes=node_list)
+            steem.rpc.next()
         if not backintime == None:
             return
         await asyncio.sleep(60*60*6) #sleep for 6 hours
@@ -783,6 +788,7 @@ async def claim_accounts():
 
 def stream_comments(sync_q):
     """Main task: Starts comment stream from the blockchain"""
+    processed_posts = []
     while True:
         """Continuously stream comment objects from Blockchain, react to relevant one"""
         try:
@@ -790,8 +796,7 @@ def stream_comments(sync_q):
             logger.info("Stream from blockchain started")
         except Exception as error:
             logger.warning("Could not start blockchain stream "+repr(error))
-            # nl.update_nodes(weights=None, steem_instance=steem)
-            # steem = Steem(nodes=node_list)
+            steem.rpc.next()
             stream_comments(sync_q)
         for post in stream:
             try:
@@ -912,14 +917,6 @@ if __name__ == '__main__':
     """
     Starting the bot. An optional custom starting block can be defined in the optional *startblock* file.
     """
-    nl = NodeList()
-    node_list = nl.get_nodes()
-    steem = Steem(nodes=node_list)
-    steem.set_default_nodes(node_list)
-    steem.wallet.unlock(walletpw)
-    blockchain = Blockchain()
-    acc = Account(curationaccount)
-    blacklist = acc.get_mutings(raw_name_list=True)
     loop = asyncio.get_event_loop()
     queue = janus.Queue(loop=loop) #janus enables the synchronous beem library to work with the asynchronous Discord.py library
     actionqueue = queue.sync_q

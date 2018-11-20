@@ -4,6 +4,7 @@ from beem import Steem
 from beem.blockchain import Blockchain
 from beem.comment import Comment
 from beem.account import Account
+from beem.amount import Amount
 from beem.nodelist import NodeList
 from beem.rc import RC
 from beem.discussions import Query, Discussions_by_created
@@ -39,9 +40,9 @@ curationaccount = 'travelfeed'
 # Curated tag to search in
 tracktag = 'travelfeed'
 # List of curators by Steem username
-curatorlist = ['for91days', 'rimicane', 'guchtere', 'mrprofessor', 'jpphotography']
+curatorlist = ['for91days', 'guchtere', 'mrprofessor', 'jpphotography']
 # List of curators by Discord ID
-discordcuratorlist = ['386832984487231490', '385782450288328704', '347827940702289920', '433065572901584907', '264508921899646980']
+discordcuratorlist = ['386832984487231490', '347827940702289920', '433065572901584907', '264508921899646980']
 # ID of the Discord bot
 botid = "489608879223734292"
 # List of whitelisted users whose posts are ignored
@@ -664,11 +665,12 @@ async def send_reward(amount, asset, to, memo):
         rewardfile = open(rewardpath, 'a+')
         rewardfile.seek(0)
         reward_list = rewardfile.read().splitlines()
-        if str(amount)+asset+to+memo in reward_list:
+        posturl = re.findall(r'http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\(\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+', memo)[0]
+        if str(amount)+asset+to+posturl in reward_list:
             logger.warning("Reward has already been sent!")
             await send_discord("Reward already sent", rewardchannel)
             return
-        rewardfile.write(str(amount)+asset+to+memo+"\n")
+        rewardfile.write(str(amount)+asset+to+posturl+"\n")
         rewardfile.close()
         acc.transfer(to=to, amount=amount, asset=asset, memo=memo, account=curationaccount)
         logger.info("Sent reward of "+str(amount)+" "+asset+" to "+to+" memo: "+memo)
@@ -707,26 +709,17 @@ async def stream_rewards(backintime):
                 post = Comment(authorperm)
                 if not "Weekly Round-Up" in post["title"]:
                     continue
-                if reward['sbd_payout'] == '0.000 SBD':
+                sbdreward = Amount(reward['sbd_payout']).amount
+                if sbdreward == 0.0:
                     sbdreward = None
-                else:
-                    sbdreward = float(re.sub("( SBD)",'',reward['sbd_payout'],re.IGNORECASE|re.DOTALL))
-                if reward['steem_payout'] == '0.000 STEEM':
+                steemreward = Amount(reward['steem_payout']).amount
+                if steemreward == 0.0:
                     steemreward = None
-                else:
-                    steemreward = float(re.sub("( STEEM)",'',reward['steem_payout'],re.IGNORECASE|re.DOTALL))
-                myre = re.compile(r'\bwritten by \<a href\="https:\/\/steemit.com\/@\b([a-zA-Z0-9-]+)\">')
+                myre = re.compile(r'\bwritten by \<a href\=\"https:\/\/steemit.com\/@\b([a-zA-Z0-9-]+)\">')
                 mentions = list(myre.findall(post["body"]))
                 for curator in curatorlist:
                     if curator in mentions:
                         mentions.remove(curator)
-                while True:
-                    if "travelfeed" in mentions:
-                        mentions.remove('travelfeed')
-                    elif "steemitworldmap" in mentions:
-                        mentions.remove('steemitworldmap')
-                    else:
-                        break
                 memo = "Congratulations! Here comes your reward for being featured in "+post["title"]+" https://steemit.com/travelfeed/"+authorperm
                 mentionsdict = {x:mentions.count(x) for x in mentions}
                 mentionsnr = len(mentions)

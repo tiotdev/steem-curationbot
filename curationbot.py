@@ -760,7 +760,7 @@ async def claim_accounts():
     rc = RC(steem_instance=steem)
     while True:
         try:
-            current_costs = steem.get_rc_cost(rc.get_resource_count(tx_size=250, new_account_op_count=1))
+            current_costs = steem.get_rc_cost(rc.get_resource_count(tx_size=250, execution_time_count=0, new_account_op_count=1))
             acc = Account("travelfeed")
             manabar = acc.get_rc_manabar()
             current_mana = manabar["current_mana"]
@@ -873,7 +873,8 @@ def stream_comments(sync_q):
                             replies = post.get_all_replies()
                             for reply in replies:
                                 if reply["author"] == "travelfeed":
-                                    raise Exception("Post already has a comment from @travelfeed!")
+                                    if "Congratulations!" in reply["body"]:
+                                        raise Exception("Post already has a comment from @travelfeed!")
                             post.reply(commenttext.format(author, count), author=curationaccount)
                             logger.info("I sucessfully left a comment for @{}".format(author))
                         except:

@@ -40,9 +40,9 @@ curationaccount = 'travelfeed'
 # Curated tag to search in
 tracktag = 'travelfeed'
 # List of curators by Steem username
-curatorlist = ['for91days', 'guchtere', 'mrprofessor', 'jpphotography']
+curatorlist = ['for91days', 'guchtere', 'mrprofessor', 'jpphotography', 'elsaenroute', 'smeralda']
 # List of curators by Discord ID
-discordcuratorlist = ['386832984487231490', '347827940702289920', '433065572901584907', '264508921899646980']
+discordcuratorlist = ['386832984487231490', '347827940702289920', '433065572901584907', '264508921899646980', '486935015867809812', '409486046364172301']
 # ID of the Discord bot
 botid = "489608879223734292"
 # List of whitelisted users whose posts are ignored
@@ -58,23 +58,23 @@ autpath = 'author_list.log'
 # Define path for logging rewards sent
 rewardpath = 'rewards.log'
 # Comment for short posts 
-shortposttext = "Hi @{}, \n Thank you for participating in the #travelfeed curated tag. To maintain a level of quality on the project we have certain criteria that must be met for participation. Please review the following: https://steemit.com/travelfeed/@travelfeed/how-to-participate-use-travelfeed-in-your-posts \n **We require at least 250 words, but your post has only {} words.** \n Thank you very much for your interest and we hope to read some great travel articles from you soon! \n If you believe that you have received this comment by mistake or have updated your post to fit our criteria, please reply to this comment with <code>!tfreview</code>. For further questions, please contact us on the [Steemit Travellers Discord](https://discord.gg/jWWu73H). \n Regards, @travelfeed"
+shortposttext = "Hi @{}, \n Thank you for participating in the #travelfeed curated tag. To maintain a level of quality on the project we have certain criteria that must be met for participation. Please review the following: https://travelfeed.io/@travelfeed/how-to-participate-use-travelfeed-in-your-posts \n **We require at least 250 words, but your post has only {} words.** \n Thank you very much for your interest and we hope to read some great travel articles from you soon! \n If you believe that you have received this comment by mistake or have updated your post to fit our criteria, please reply to this comment with <code>!tfreview</code>. For further questions, please contact us on the [TravelFeed Discord](https://discord.gg/jWWu73H). \n Regards, @travelfeed"
 # Comment for blacklisted users
-blacklisttext = "Hi @{}, \n Thank you for participating in the #travelfeed curated tag. To maintain a level of quality on the project we have certain criteria that must be met for participation. Please review the following: https://steemit.com/travelfeed/@travelfeed/how-to-participate-use-travelfeed-in-your-posts \n **You are currently blacklisted from the TravelFeed curation.** \n This is most likely because we have detected plagiarism in one of your posts in the past. If you believe that this is a mistake, please contact us on the [Steemit Travellers Discord](https://discord.gg/jWWu73H). \n Regards, @travelfeed"
+blacklisttext = "Hi @{}, \n Thank you for participating in the #travelfeed curated tag. To maintain a level of quality on the project we have certain criteria that must be met for participation. Please review the following: https://travelfeed.io/@travelfeed/how-to-participate-use-travelfeed-in-your-posts \n **You are currently blacklisted from the TravelFeed curation.** \n This is most likely because we have detected plagiarism in one of your posts in the past. If you believe that this is a mistake, please contact us on the [TravelFeed Discord](https://discord.gg/jWWu73H). \n Regards, @travelfeed"
 # Comment for other languages
-wronglangtext = "Hi @{}, \n Thank you for participating in the #travelfeed curated tag. To maintain a level of quality on the project we have certain criteria that must be met for participation. Please review the following: https://steemit.com/travelfeed/@travelfeed/how-to-participate-use-travelfeed-in-your-posts \n We require at least 250 words **in English**. \n Thank you very much for your interest and we hope to read some great travel articles from you soon! \n The language of your post was automatically detected, if your English text is at least 250 words long or you have updated your post to fit our criteria, please reply to this comment with <code>!tfreview</code> for it to be considered for curation. For further questions, please contact us on the [Steemit Travellers Discord](https://discord.gg/jWWu73H). \n Regards, @travelfeed"
+wronglangtext = "Hi @{}, \n Thank you for participating in the #travelfeed curated tag. To maintain a level of quality on the project we have certain criteria that must be met for participation. Please review the following: https://travelfeed.io/@travelfeed/how-to-participate-use-travelfeed-in-your-posts \n We require at least 250 words **in English**. \n Thank you very much for your interest and we hope to read some great travel articles from you soon! \n The language of your post was automatically detected, if your English text is at least 250 words long or you have updated your post to fit our criteria, please reply to this comment with <code>!tfreview</code> for it to be considered for curation. For further questions, please contact us on the [TravelFeed Discord](https://discord.gg/jWWu73H). \n Regards, @travelfeed"
 # Honour text
-honourtext = "Congratulations! Your high-quality travel content was selected by @travelfeed curator @{} and earned you a **partial** upvote. We love your hard work and hope to encourage you to continue to publish strong travel-related content. <br> Thank you for being part of the TravelFeed community! <center> [![TravelFeed](https://ipfs.busy.org/ipfs/QmZhLuw8WE6JMCYHD3EXn3MBa2CSCcygvfFqfXde5z3TLZ)](https://steemit.com/travelfeed/@travelfeed/introducing-travelfeed-featuring-steemit-s-best-travel-content) <br> **Learn more about our travel project on Steemit by clicking on the banner above and join our community on [Discord](https://discord.gg/jWWu73H)**.</center>"
+honourtext = "Congratulations! Your high-quality travel content was selected by @travelfeed curator @{} and earned you a **partial** upvote. We love your hard work and hope to encourage you to continue to publish strong travel-related content. <br> Thank you for being part of the TravelFeed community! <center> [![TravelFeed](https://ipfs.busy.org/ipfs/QmZhLuw8WE6JMCYHD3EXn3MBa2CSCcygvfFqfXde5z3TLZ)](https://travelfeed.io/@travelfeed/introducing-travelfeed-featuring-steemit-s-best-travel-content) <br> **Learn more about our travel project by clicking on the banner above and join our community on [Discord](https://discord.gg/jWWu73H)**.</center>"
 # Resteem Text
-resteemtext = "Congratulations! Your high-quality travel content was selected by @travelfeed curator @{} and earned you a reward, in form of a **100% upvote** and a **resteem**. Your work really stands out! Your article now has a chance to get featured under the appropriate daily topic on our TravelFeed blog. <br> Thank you for being part of the TravelFeed community! <br> <center>[![TravelFeed](https://ipfs.busy.org/ipfs/QmNTkoKQNzuQbQGbcZ1exTMjvxYUprdnVczxnvib9VUSqB)](https://steemit.com/travelfeed/@travelfeed/introducing-travelfeed-featuring-steemit-s-best-travel-content) <br> **Learn more about our travel project on Steemit by clicking on the banner above and join our community on [Discord](https://discord.gg/jWWu73H)**</center>"
+resteemtext = "Congratulations! Your high-quality travel content was selected by @travelfeed curator @{} and earned you a reward, in form of a **100% upvote** and a **resteem**. Your work really stands out! Your article now has a chance to get featured under the appropriate daily topic on our TravelFeed blog. <br> Thank you for being part of the TravelFeed community! <br> <center>[![TravelFeed](https://ipfs.busy.org/ipfs/QmNTkoKQNzuQbQGbcZ1exTMjvxYUprdnVczxnvib9VUSqB)](http://travelfeed.io/travelfeed/@travelfeed/introducing-travelfeed-featuring-steemit-s-best-travel-content) <br> **Learn more about our travel project by clicking on the banner above and join our community on [Discord](https://discord.gg/jWWu73H)**</center>"
 # Advote Text
-advotetext = "Great read! Your high-quality travel content was selected by @travelfeed curator @{}. We just gave you a small upvote together with over 60 followers of the @travelfeed curation trail. <br> Have you heard of @travelfeed? Using the #travelfeed tag rewards authors and content creators who produce exceptional travel related articles, so be sure use our tag to get much bigger upvotes, resteems and be featured in our curation posts! <br> <center>[![TravelFeed](https://ipfs.busy.org/ipfs/QmNTkoKQNzuQbQGbcZ1exTMjvxYUprdnVczxnvib9VUSqB)](https://steemit.com/travelfeed/@travelfeed/introducing-travelfeed-featuring-steemit-s-best-travel-content) <br> **Learn more about our travel project on Steemit by clicking on the banner above and join our community on [Discord](https://discord.gg/jWWu73H)**</center>"
+advotetext = "Great read! Your high-quality travel content was selected by @travelfeed curator @{}. We just gave you a small upvote together with over 60 followers of the @travelfeed curation trail. <br> Have you heard of @travelfeed? Using the #travelfeed tag rewards authors and content creators who produce exceptional travel related articles, so be sure use our tag to get much bigger upvotes, resteems and be featured in our curation posts! <br> <center>[![TravelFeed](https://ipfs.busy.org/ipfs/QmNTkoKQNzuQbQGbcZ1exTMjvxYUprdnVczxnvib9VUSqB)](http://travelfeed.io/travelfeed/@travelfeed/introducing-travelfeed-featuring-steemit-s-best-travel-content) <br> **Learn more about our travel project by clicking on the banner above and join our community on [Discord](https://discord.gg/jWWu73H)**</center>"
 # Manual comment text for short posts
-manualshorttext = "Hi @{}, \n Thank you for participating in the #travelfeed curated tag. To maintain a level of quality on the project we have certain criteria that must be met for participation. Please review the following: https://steemit.com/travelfeed/@travelfeed/how-to-participate-use-travelfeed-in-your-posts \n **We require at least 250 words.** \n Thank you very much for your interest and we hope to read some great travel articles from you soon! \n If you believe that you have received this comment by mistake or have updated your post to fit our criteria, please reply to this comment with <code>!tfreview</code>. For further questions, please contact us on the [Steemit Travellers Discord](https://discord.gg/jWWu73H). \n Regards, @travelfeed"
+manualshorttext = "Hi @{}, \n Thank you for participating in the #travelfeed curated tag. To maintain a level of quality on the project we have certain criteria that must be met for participation. Please review the following: https://travelfeed.io/@travelfeed/how-to-participate-use-travelfeed-in-your-posts \n **We require at least 250 words.** \n Thank you very much for your interest and we hope to read some great travel articles from you soon! \n If you believe that you have received this comment by mistake or have updated your post to fit our criteria, please reply to this comment with <code>!tfreview</code>. For further questions, please contact us on the [TravelFeed Discord](https://discord.gg/jWWu73H). \n Regards, @travelfeed"
 # Manual comment text for posts that are not in English
-manuallangtext = "Hi @{}, \n Thank you for participating in the #travelfeed curated tag. To maintain a level of quality on the project we have certain criteria that must be met for participation. Please review the following: https://steemit.com/travelfeed/@travelfeed/how-to-participate-use-travelfeed-in-your-posts \n We require at least 250 words **in English**. \n Thank you very much for your interest and we hope to read some great travel articles from you soon! \n If you believe that you have received this comment by mistake or have updated your post to fit our criteria, please reply to this comment with <code>!tfreview</code>. For further questions, please contact us on the [Steemit Travellers Discord](https://discord.gg/jWWu73H). \n Regards, @travelfeed"
+manuallangtext = "Hi @{}, \n Thank you for participating in the #travelfeed curated tag. To maintain a level of quality on the project we have certain criteria that must be met for participation. Please review the following: https://travelfeed.io/@travelfeed/how-to-participate-use-travelfeed-in-your-posts \n We require at least 250 words **in English**. \n Thank you very much for your interest and we hope to read some great travel articles from you soon! \n If you believe that you have received this comment by mistake or have updated your post to fit our criteria, please reply to this comment with <code>!tfreview</code>. For further questions, please contact us on the [TravelFeed Discord](https://discord.gg/jWWu73H). \n Regards, @travelfeed"
 # Copyright text
-copyrighttext = "Hi @{}, \n Thank you for participating in the #travelfeed curated tag. To maintain a level of quality on the project we have certain criteria that must be met for participation. Please review the following: https://steemit.com/travelfeed/@travelfeed/how-to-participate-use-travelfeed-in-your-posts \n We require **proper sourcing** for all media and text that is not your own. \n If you have updated your post with sources, please reply to this comment with <code>!tfreview</code>. For further questions, please contact us on the [Steemit Travellers Discord](https://discord.gg/jWWu73H). \n Thank you very much for your interest and we hope to read some great travel articles from you soon! \n Regards, @travelfeed"
+copyrighttext = "Hi @{}, \n Thank you for participating in the #travelfeed curated tag. To maintain a level of quality on the project we have certain criteria that must be met for participation. Please review the following: https://travelfeed.io/@travelfeed/how-to-participate-use-travelfeed-in-your-posts \n We require **proper sourcing** for all media and text that is not your own. \n If you have updated your post with sources, please reply to this comment with <code>!tfreview</code>. For further questions, please contact us on the [TravelFeed Discord](https://discord.gg/jWWu73H). \n Thank you very much for your interest and we hope to read some great travel articles from you soon! \n Regards, @travelfeed"
 
 honours = {}
 resteems = {}
@@ -83,13 +83,15 @@ TOKEN = os.environ.get('TOKEN') #Discord secret token must be set as environment
 logger = logging.getLogger(__name__)
 logging.basicConfig(filename=logpath, format='%(asctime)s %(levelname)s: %(message)s', level=logging.INFO)
 nl = NodeList()
-node_list = nl.get_nodes()
+weights = {'block': 0.1, 'history': 1, 'apicall': 0.1, 'config': 0.1}
+node_list = nl.update_nodes(weights)
 steem = Steem(nodes=node_list)
 steem.set_default_nodes(node_list)
 steem.wallet.unlock(walletpw)
 blockchain = Blockchain()
 acc = Account(curationaccount)
-blacklist = acc.get_mutings(raw_name_list=True)
+# blacklist = acc.get_mutings(raw_name_list=True)
+blacklist = []
 
 """
 Discord functions
@@ -687,8 +689,8 @@ async def stream_rewards(backintime):
         try:
             if backintime == None:
                 rewardtime = 6
-            elif int(backintime) > 7:
-                await send_discord("Can only go back up to 7 days", rewardchannel)
+            elif int(backintime) > 14:
+                await send_discord("Can only go back up to 14 days", rewardchannel)
                 return
             else:
                 rewardtime = int(backintime)*24
@@ -720,7 +722,7 @@ async def stream_rewards(backintime):
                 for curator in curatorlist:
                     if curator in mentions:
                         mentions.remove(curator)
-                memo = "Congratulations! Here comes your reward for being featured in "+post["title"]+" https://steemit.com/travelfeed/"+authorperm
+                memo = "Congratulations! Here comes your reward for being featured in "+post["title"]+" https://travelfeed.io/"+authorperm
                 mentionsdict = {x:mentions.count(x) for x in mentions}
                 mentionsnr = len(mentions)
                 if mentionsnr == 0:
@@ -821,7 +823,7 @@ def stream_comments(sync_q):
                             history = get_history(author)
                             try:
                                 sync_q.put(Discord_Message("Author requests manual review: "+history, feedchannel))
-                                sync_q.put(Discord_Message("https://steemit.com/"+parentlink, feedchannel))
+                                sync_q.put(Discord_Message("https://travelfeed.io/"+parentlink, feedchannel))
                             except:
                                 logger.warning("Could not send message to Discord")
                             try:
@@ -862,7 +864,7 @@ def stream_comments(sync_q):
                                     msg = history+". **"+str(count)+"** words. Location: **"+location+"**"
                                 try:
                                     sync_q.put(Discord_Message(msg, feedchannel))
-                                    sync_q.put(Discord_Message("https://steemit.com/"+authorperm, feedchannel))
+                                    sync_q.put(Discord_Message("https://travelfeed.io/"+authorperm, feedchannel))
                                 except:
                                     logger.warning("Could not send message to Discord")
                         except Exception as error:
